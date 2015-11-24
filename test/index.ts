@@ -89,7 +89,7 @@ describe('mlcl_mailer', function() {
         // setup e-mail data with unicode symbols
         var mailOptions = {
           from: 'from@domain.com',
-          to: 'dominic@inspirationlabs.com',
+          to: 'to@domain.com',
           subject: 'Test',
           template: 'email',
           context: {
@@ -98,9 +98,9 @@ describe('mlcl_mailer', function() {
         }
 
         molecuel.mailer.sendMail(mailOptions, function(err, info, data) {
+          should.not.exist(err);
           done();
         });
-
       });
     });
 });

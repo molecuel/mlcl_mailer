@@ -64,7 +64,7 @@ describe('mlcl_mailer', function () {
         it('should send a mail end return via callback', function (done) {
             var mailOptions = {
                 from: 'from@domain.com',
-                to: 'dominic@inspirationlabs.com',
+                to: 'to@domain.com',
                 subject: 'Test',
                 template: 'email',
                 context: {
@@ -72,6 +72,7 @@ describe('mlcl_mailer', function () {
                 }
             };
             molecuel.mailer.sendMail(mailOptions, function (err, info, data) {
+                should.not.exist(err);
                 done();
             });
         });
