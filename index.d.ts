@@ -1,5 +1,6 @@
 import nodemailer = require('nodemailer');
 declare class mlcl_mailer {
+    static loaderversion: number;
     transporter: nodemailer.Transporter;
     config: any;
     protected viewEngine: any;

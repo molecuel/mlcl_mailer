@@ -54,4 +54,5 @@ class mlcl_mailer {
         });
     }
 }
+mlcl_mailer.loaderversion = 2;
 module.exports = mlcl_mailer;

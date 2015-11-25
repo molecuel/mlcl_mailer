@@ -13,6 +13,7 @@ import nodemailerExpressHandlebars = require('nodemailer-express-handlebars');
 import nodemailerHtmlToText = require('nodemailer-html-to-text');
 
 class mlcl_mailer {
+  public static loaderversion = 2;
   public transporter: nodemailer.Transporter;
   public config:any;
   protected viewEngine:any;
