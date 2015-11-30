@@ -63,7 +63,6 @@ class mlcl_mailer {
   public sendMail(mailoptions:any, callback?: Function):void{
     // send mail with defined transport  object
     this.transporter.sendMail(mailoptions, (error, info) => {
-      console.log(error);
       if(error){
         var messageid = null;
         if(info && info.messageId) {

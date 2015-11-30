@@ -40,7 +40,6 @@ class mlcl_mailer {
     }
     sendMail(mailoptions, callback) {
         this.transporter.sendMail(mailoptions, (error, info) => {
-            console.log(error);
             if (error) {
                 var messageid = null;
                 if (info && info.messageId) {
