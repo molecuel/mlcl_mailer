@@ -64,8 +64,13 @@ class mlcl_mailer {
     // send mail with defined transport  object
     this.transporter.sendMail(mailoptions, (error, info) => {
       if(error){
+        var messageid = null;
+        if(info && info.messageId) {
+          messageid = info.messageId;
+        }
+
         this.molecuel.log.error('mailer', 'Error while delivering mail',
-        {messageId: info.messageId, error: error})
+        {messageId: messageid, error: error});
         this.molecuel.emit('mlcl::mailer::message:error', this, mailoptions, error);
       } else {
         this.molecuel.log.info('mailer', 'Mail queued',
