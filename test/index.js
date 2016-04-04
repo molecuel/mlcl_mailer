@@ -1,7 +1,7 @@
 'use strict';
-var should = require('should');
-var event = require('events');
-var mlcl_mail = require('../');
+const should = require('should');
+const event = require('events');
+let mlcl_mailer = require('../dist/');
 class _mlcl extends event.EventEmitter {
     constructor() {
         super();
@@ -33,7 +33,7 @@ describe('mlcl_mailer', function () {
     });
     describe('mailer', function () {
         it('should initialize', function (done) {
-            new mlcl_mail(molecuel, {});
+            new mlcl_mailer(molecuel, {});
             done();
         });
         it('should send a mail', function (done) {
