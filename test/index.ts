@@ -2,6 +2,7 @@
 import should = require('should');
 import assert = require('assert');
 import event = require('events');
+let mlcl_queue = require('mlcl_queue');
 let mlcl_mailer = require('../dist/');
 
 class _mlcl extends event.EventEmitter {
@@ -27,6 +28,20 @@ describe('mlcl_mailer', function() {
 
     molecuel.config = {};
 
+    molecuel.config.queue = {
+      uri: 'amqp://localhost'
+    };
+
+    if (process.env.NODE_ENV === 'dockerdev') {
+      molecuel.config.queue = {
+        uri: 'amqp://192.168.99.100'
+      };
+    }
+
+    mlcl_queue(molecuel);
+
+    // Legacy config SMTP only
+    /*
     molecuel.config.smtp = {
       enabled: true,
       debug: true,
@@ -38,6 +53,32 @@ describe('mlcl_mailer', function() {
       },
       templateDir: __dirname + '/templates'
     };
+    */
+
+    // Migration mailer 2.x smtp, ses, ...
+    molecuel.config.mail = {
+      enabled: true,
+      default: 'smtp',
+      smtp: {
+        enabled: true,
+        debug: true,
+        host: '192.168.99.100',
+        tlsUnauth: true,
+        auth: {
+          user: 'molecuel',
+          pass: 'molecuel'
+        },
+        templateDir: __dirname + '/templates'
+      },
+      ses: {
+        enabled: true,
+        debug: true,
+        region: 'eu-west-1',
+        accessKeyId: 'YOUR_ACCESS_ID',
+        secretAccessKey: 'YOUR_SECRET_KEY',
+        templateDir: __dirname + '/templates'
+      }
+    }
 
     done();
   });
@@ -51,8 +92,8 @@ describe('mlcl_mailer', function() {
     it('should send a mail', function(done) {
       // setup e-mail data with unicode symbols
       var mailOptions = {
-        from: 'from@domain.com',
-        to: 'to@domain.com',
+        from: 'murat.calis@inspirationlabs.com',
+        to: 'murat.calis@inspirationlabs.com',
         subject: 'Test',
         template: 'email',
         context: {
@@ -83,8 +124,8 @@ describe('mlcl_mailer', function() {
     it('should send a mail end return via callback', function(done) {
       // setup e-mail data with unicode symbols
       var mailOptions = {
-        from: 'from@domain.com',
-        to: 'to@domain.com',
+        from: 'murat.calis@inspirationlabs.com',
+        to: 'murat.calis@inspirationlabs.com',
         subject: 'Test',
         template: 'email',
         context: {

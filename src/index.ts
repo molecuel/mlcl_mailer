@@ -5,6 +5,7 @@ import nodemailer = require('nodemailer');
 import expressHandleBars = require('express-handlebars');
 import nodemailerExpressHandlebars = require('nodemailer-express-handlebars');
 import nodemailerHtmlToText = require('nodemailer-html-to-text');
+import nodemailerSesTransport = require('nodemailer-ses-transport');
 
 class mlcl_mailer {
   public static loaderversion = 2;
@@ -13,17 +14,51 @@ class mlcl_mailer {
   protected viewEngine: any;
   protected templateEngine: any;
   protected molecuel: any;
+  protected queue: any;
 
+  /**
+   * mlcl_mailer constructor wants JSON
+   * @param mlcl any
+   * @param config any
+   * @return -
+   */
   constructor(mlcl: any, config: any) {
     this.molecuel = mlcl;
 
     mlcl.mailer = this;
+
+    // Register with RogerRabbit queue jobs
+    this.molecuel.on('mlcl::queue::init:post', (queue) => {
+      console.log('queue init at mailer');
+      this.queue = queue;
+
+      if (this.molecuel.serverroles && this.molecuel.serverroles.worker) {
+        // register task queues
+        let qname = 'mlcl::mailer::sendq';
+        let chan = this.queue.getChannel();
+        chan.then(function(ch) {
+          ch.assertQueue(qname);
+          ch.prefetch(50);
+          ch.consume(qname, function(msg) {
+            console.log(msg);
+          });
+        }).then(null, function(err) {
+          this.molecuel.log.error('mlcl_mailer', err);
+        });
+      }
+
+    });
+
+
+    // node-mailer migration 2.x backward compatibility if smtp is configured in legacy mode
+    // Legacy object is mlcl.config.smtp, new object is mlcl.config.mail.smtp
     if (mlcl && mlcl.config && mlcl.config.smtp && mlcl.config.smtp.enabled) {
 
       if (mlcl.config.smtp.tlsUnauth) {
         process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
       }
       this.config = {};
+
       this.config.host = mlcl.config.smtp.host || 'localhost';
       this.config.port = mlcl.config.smtp.port || 25;
       if (mlcl.config.smtp.auth) {
@@ -40,6 +75,7 @@ class mlcl_mailer {
         this.config
       );
 
+
       // init view engine for html mails
       if (mlcl.config.smtp.templateDir) {
         this.viewEngine = expressHandleBars.create({});
@@ -54,8 +90,113 @@ class mlcl_mailer {
         }
       }
     }
+
+    // node-mailer 2.x switch smtp, ses...
+    else if (mlcl && mlcl.config && mlcl.config.mail && mlcl.config.mail.enabled) {
+      this.config = {};
+      this.config.mail = {};
+
+      // SMTP
+      if (mlcl.config.mail.enabled && mlcl.config.mail.smtp && mlcl.config.mail.default === 'smtp') {
+
+        if (mlcl.config.mail.smtp.tlsUnauth) {
+          process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
+        }
+        this.config.mail.smtp = {};
+
+        this.config.mail.smtp.host = mlcl.config.mail.smtp.host || 'localhost';
+        this.config.mail.smtp.port = mlcl.config.mail.smtp.port || 25;
+        if (mlcl.config.mail.smtp.auth) {
+          this.config.mail.smtp.auth = mlcl.config.mail.smtp.auth;
+        }
+        this.config.mail.smtp.maxConnections = mlcl.config.mail.smtp.maxConnection || 5;
+        this.config.mail.smtp.maxMessages = mlcl.config.mail.smtp.maxMessages || 100;
+        this.config.mail.smtp.rateLimit = mlcl.config.mail.smtp.rateLimit || false;
+        this.config.mail.smtp.secure = mlcl.config.mail.smtp.secure || false;
+        this.config.mail.smtp.debug = mlcl.config.mail.smtp.debug || false;
+        this.config.mail.smtp.pool = mlcl.config.mail.smtp.pool || false;
+
+        this.transporter = nodemailer.createTransport(
+          this.config.mail.smtp
+        );
+
+        // init view engine for html mails
+        if (mlcl.config.mail.smtp.templateDir) {
+          this.viewEngine = expressHandleBars.create({});
+          this.templateEngine = nodemailerExpressHandlebars({
+            viewEngine: this.viewEngine,
+            viewPath: mlcl.config.mail.smtp.templateDir,
+            extName: '.hbs'
+          });
+          this.transporter.use('compile', this.templateEngine);
+          if (!mlcl.config.mail.smtp.disableToText) {
+            this.transporter.use('compile', nodemailerHtmlToText.htmlToText());
+          }
+        }
+      }
+      // Amazon SES
+      else if (mlcl.config.mail.enabled && mlcl.config.mail.ses && mlcl.config.mail.default === 'ses') {
+
+        if (mlcl.config.mail.ses.tlsUnauth) {
+          process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
+        }
+        this.config.mail.ses = {};
+
+        this.config.mail.ses.accessKeyId = mlcl.config.mail.ses.accessKeyId;
+        this.config.mail.ses.secretAccessKey = mlcl.config.mail.ses.secretAccessKey;
+        this.config.mail.ses.rateLimit = mlcl.config.mail.ses.rateLimit || 5;
+        this.config.mail.ses.region = mlcl.config.mail.ses.region || 'eu-west-1';
+
+        // SESTransporter
+        this.transporter = nodemailer.createTransport(
+          nodemailerSesTransport(this.config.mail.ses)
+        );
+
+        // init view engine for html mails
+        if (mlcl.config.mail.ses.templateDir) {
+          this.viewEngine = expressHandleBars.create({});
+          this.templateEngine = nodemailerExpressHandlebars({
+            viewEngine: this.viewEngine,
+            viewPath: mlcl.config.mail.ses.templateDir,
+            extName: '.hbs'
+          });
+          this.transporter.use('compile', this.templateEngine);
+          if (!mlcl.config.mail.ses.disableToText) {
+            this.transporter.use('compile', nodemailerHtmlToText.htmlToText());
+          }
+        }
+      }
+    }
   }
 
+
+  /**
+   * mlcl_mailer::sendToQ(QData)
+   * @param template
+   * @param from
+   * @param to
+   * @param data
+   * @param subject
+   * @param options
+   * @return -
+   */
+  public sendToQ(qobject: any) {
+
+
+
+
+
+
+  }
+
+
+
+  /**
+   * sendMail with nodemailer as SMTP or SES
+   * @param mailoptions any
+   * @param callback function optional
+   * @return void
+   */
   public sendMail(mailoptions: any, callback?: Function): void {
     // send mail with defined transport  object
     this.transporter.sendMail(mailoptions, (error, info) => {
@@ -78,6 +219,8 @@ class mlcl_mailer {
       }
     });
   }
+
+
 }
 
 export = mlcl_mailer;

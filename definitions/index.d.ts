@@ -6,7 +6,9 @@ declare class mlcl_mailer {
     protected viewEngine: any;
     protected templateEngine: any;
     protected molecuel: any;
+    protected queue: any;
     constructor(mlcl: any, config: any);
+    sendToQ(qobject: any): void;
     sendMail(mailoptions: any, callback?: Function): void;
 }
 export = mlcl_mailer;

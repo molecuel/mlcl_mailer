@@ -99,7 +99,7 @@ export class Gulpfile {
 
   @SequenceTask('watch') // this special annotation using "run-sequence" module to run returned tasks in sequence
   watch(): any {
-    return gulp.watch(this.config.paths.source, ['build']);
+    return gulp.watch([this.config.paths.source, this.config.paths.testsource], ['build']);
   }
 
   @SequenceTask('default')

@@ -1,6 +1,7 @@
 'use strict';
 const should = require('should');
 const event = require('events');
+let mlcl_queue = require('mlcl_queue');
 let mlcl_mailer = require('../dist/');
 class _mlcl extends event.EventEmitter {
     constructor() {
@@ -18,16 +19,37 @@ describe('mlcl_mailer', function () {
         molecuel.log.debug = console.log;
         molecuel.log.warn = console.log;
         molecuel.config = {};
-        molecuel.config.smtp = {
+        molecuel.config.queue = {
+            uri: 'amqp://localhost'
+        };
+        if (process.env.NODE_ENV === 'dockerdev') {
+            molecuel.config.queue = {
+                uri: 'amqp://192.168.99.100'
+            };
+        }
+        mlcl_queue(molecuel);
+        molecuel.config.mail = {
             enabled: true,
-            debug: true,
-            host: '192.168.99.100',
-            tlsUnauth: true,
-            auth: {
-                user: 'molecuel',
-                pass: 'molecuel'
+            default: 'smtp',
+            smtp: {
+                enabled: true,
+                debug: true,
+                host: '192.168.99.100',
+                tlsUnauth: true,
+                auth: {
+                    user: 'molecuel',
+                    pass: 'molecuel'
+                },
+                templateDir: __dirname + '/templates'
             },
-            templateDir: __dirname + '/templates'
+            ses: {
+                enabled: true,
+                debug: true,
+                region: 'eu-west-1',
+                accessKeyId: 'YOUR_ACCESS_ID',
+                secretAccessKey: 'YOUR_SECRET_KEY',
+                templateDir: __dirname + '/templates'
+            }
         };
         done();
     });
@@ -38,8 +60,8 @@ describe('mlcl_mailer', function () {
         });
         it('should send a mail', function (done) {
             var mailOptions = {
-                from: 'from@domain.com',
-                to: 'to@domain.com',
+                from: 'murat.calis@inspirationlabs.com',
+                to: 'murat.calis@inspirationlabs.com',
                 subject: 'Test',
                 template: 'email',
                 context: {
@@ -63,8 +85,8 @@ describe('mlcl_mailer', function () {
         });
         it('should send a mail end return via callback', function (done) {
             var mailOptions = {
-                from: 'from@domain.com',
-                to: 'to@domain.com',
+                from: 'murat.calis@inspirationlabs.com',
+                to: 'murat.calis@inspirationlabs.com',
                 subject: 'Test',
                 template: 'email',
                 context: {
