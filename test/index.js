@@ -27,7 +27,6 @@ describe('mlcl_mailer', function () {
                 uri: 'amqp://192.168.99.100'
             };
         }
-        mlcl_queue(molecuel);
         molecuel.config.mail = {
             enabled: true,
             default: 'smtp',
@@ -51,6 +50,8 @@ describe('mlcl_mailer', function () {
                 templateDir: __dirname + '/templates'
             }
         };
+        mlcl_queue(molecuel);
+        molecuel.emit('mlcl::core::init:post', molecuel);
         done();
     });
     describe('mailer', function () {

@@ -38,8 +38,6 @@ describe('mlcl_mailer', function() {
       };
     }
 
-    mlcl_queue(molecuel);
-
     // Legacy config SMTP only
     /*
     molecuel.config.smtp = {
@@ -79,6 +77,11 @@ describe('mlcl_mailer', function() {
         templateDir: __dirname + '/templates'
       }
     }
+
+    mlcl_queue(molecuel);
+
+    // fake init molecuel
+    molecuel.emit('mlcl::core::init:post', molecuel);
 
     done();
   });
