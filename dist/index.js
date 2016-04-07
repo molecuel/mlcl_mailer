@@ -19,7 +19,16 @@ class mlcl_mailer {
                     ch.consume(qname, (msg) => {
                         let m = msg.content.toString();
                         this.molecuel.log.debug('mlcl::mailer::queue::in::message: ' + m);
-                        ch.ack(msg);
+                        let msgobject = JSON.parse(m);
+                        this.sendMail(msgobject, (err, info, mailoptions) => {
+                            if (err) {
+                                ch.nack(msg);
+                            }
+                            else {
+                                this.molecuel.log.debug('mlcl::mailer::queue:sent', info);
+                                ch.ack(msg);
+                            }
+                        });
                     });
                 }).then(null, function (error) {
                     this.molecuel.log.error('mlcl_mailer', error);
