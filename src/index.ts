@@ -49,7 +49,7 @@ class mlcl_mailer {
                 this.molecuel.log.debug('mlcl::mailer::queue:sent', info);
                 ch.ack(msg);
               }
-            })
+            });
           });
         }).then(null, function(error) {
           this.molecuel.log.error('mlcl_mailer', error);
