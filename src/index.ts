@@ -40,13 +40,13 @@ class mlcl_mailer {
           ch.assertQueue(qname);
           ch.prefetch(50);
           ch.consume(qname, function(msg) {
-            console.log(msg);
+            let m = msg.content.toString();
+            console.log('CHANNEL msg: ' + m);
           });
         }).then(null, function(err) {
           this.molecuel.log.error('mlcl_mailer', err);
         });
       }
-
     });
 
 
@@ -171,25 +171,28 @@ class mlcl_mailer {
 
 
   /**
-   * mlcl_mailer::sendToQ(QData)
-   * @param template
-   * @param from
-   * @param to
-   * @param data
-   * @param subject
-   * @param options
-   * @return -
+   * mlcl_mailer::sendToQ(qobject)
+   * @brief If a certain threshold of E-Mails is exeeded,
+   *        incoming jobs will be forwarded to queue delegator.
+   * @param qobject Object containing E-Mail message fields and values
+   * @return void
    */
-  public sendToQ(qobject: any) {
-
-
-
-
-
-
+  public sendToQ(qobject: any): void {
+    // mandatory fields are from, to, subject and template
+    if (qobject.from && qobject.to && qobject.subject && qobject.template) {
+      this.molecuel.log.debug('mailer', 'Sending job object to queue', qobject);
+      let qname = 'mlcl::mailer::sendToQ';
+      let chan = this.queue.getChannel();
+      chan.then((ch) => {
+        ch.assertQueue(qname);
+        ch.sendToQueue(qname, new Buffer(JSON.stringify(qobject)));
+      }).then(null, (error) => {
+        this.molecuel.log.error('mailer', 'sendToQ :: error while sending to queue', error);
+      });
+    } else {
+      this.molecuel.log.warn('mailer', 'sendToQ :: missing mandatory fields', qobject);
+    }
   }
-
-
 
   /**
    * sendMail with nodemailer as SMTP or SES
@@ -219,8 +222,6 @@ class mlcl_mailer {
       }
     });
   }
-
-
 }
 
 export = mlcl_mailer;

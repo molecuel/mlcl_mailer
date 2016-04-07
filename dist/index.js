@@ -18,7 +18,8 @@ class mlcl_mailer {
                     ch.assertQueue(qname);
                     ch.prefetch(50);
                     ch.consume(qname, function (msg) {
-                        console.log(msg);
+                        let m = msg.content.toString();
+                        console.log('CHANNEL msg: ' + m);
                     });
                 }).then(null, function (err) {
                     this.molecuel.log.error('mlcl_mailer', err);
@@ -114,6 +115,20 @@ class mlcl_mailer {
         }
     }
     sendToQ(qobject) {
+        if (qobject.from && qobject.to && qobject.subject && qobject.template) {
+            this.molecuel.log.debug('mailer', 'Sending job object to queue', qobject);
+            let qname = 'mlcl::mailer::sendToQ';
+            let chan = this.queue.getChannel();
+            chan.then((ch) => {
+                ch.assertQueue(qname);
+                ch.sendToQueue(qname, new Buffer(JSON.stringify(qobject)));
+            }).then(null, (error) => {
+                this.molecuel.log.error('mailer', 'sendToQ :: error while sending to queue', error);
+            });
+        }
+        else {
+            this.molecuel.log.warn('mailer', 'sendToQ :: missing mandatory fields', qobject);
+        }
     }
     sendMail(mailoptions, callback) {
         this.transporter.sendMail(mailoptions, (error, info) => {

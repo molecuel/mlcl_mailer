@@ -18,6 +18,8 @@ describe('mlcl_mailer', function () {
         molecuel.log.error = console.log;
         molecuel.log.debug = console.log;
         molecuel.log.warn = console.log;
+        molecuel.serverroles = {};
+        molecuel.serverroles.worker = true;
         molecuel.config = {};
         molecuel.config.queue = {
             uri: 'amqp://localhost'
@@ -98,6 +100,31 @@ describe('mlcl_mailer', function () {
                 should.not.exist(err);
                 done();
             });
+        });
+        it('should send to queue', function (done) {
+            let qoptions = {
+                from: 'murat.calis@inspirationlabs.com',
+                to: 'murat.calis@inspirationlabs.com',
+                cc: 'murat.calis@inspirationlabs.com',
+                subject: 'Subject',
+                template: 'email',
+                data: {
+                    anrede: 'Herr',
+                    name: 'Hans',
+                    vorname: 'Meiser'
+                },
+                options: {
+                    option1: 'option_value1',
+                    option2: 'option_value2'
+                }
+            };
+            molecuel.mailer.sendToQ(qoptions, function (errror) {
+                should.not.exist(error);
+            });
+            molecuel.mailer.sendToQ(qoptions, function (errror) {
+                should.not.exist(error);
+            });
+            done();
         });
     });
 });
