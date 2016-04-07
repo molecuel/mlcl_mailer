@@ -118,10 +118,10 @@ describe('mlcl_mailer', function () {
                     option2: 'option_value2'
                 }
             };
-            molecuel.mailer.sendToQ(qoptions, function (errror) {
+            molecuel.mailer.sendToQ(qoptions, function (error) {
                 should.not.exist(error);
             });
-            molecuel.mailer.sendToQ(qoptions, function (errror) {
+            molecuel.mailer.sendToQ(qoptions, function (error) {
                 should.not.exist(error);
             });
             done();

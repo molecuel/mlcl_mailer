@@ -155,18 +155,18 @@ describe('mlcl_mailer', function() {
           anrede: 'Herr',
           name: 'Hans',
           vorname: 'Meiser'
-        }
+        },
         options: {
           option1: 'option_value1',
           option2: 'option_value2'
         }
       }
 
-      molecuel.mailer.sendToQ(qoptions, function(errror) {
+      molecuel.mailer.sendToQ(qoptions, function(error) {
         should.not.exist(error);
       });
 
-      molecuel.mailer.sendToQ(qoptions, function(errror) {
+      molecuel.mailer.sendToQ(qoptions, function(error) {
         should.not.exist(error);
       });
 
