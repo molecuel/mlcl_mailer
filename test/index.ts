@@ -170,6 +170,10 @@ describe('mlcl_mailer', function() {
         should.not.exist(error);
       });
 
+      molecuel.mailer.sendToQ(qoptions, function(error) {
+        should.not.exist(error);
+      });
+
       done();
     });
 

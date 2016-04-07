@@ -9,20 +9,20 @@ class mlcl_mailer {
         this.molecuel = mlcl;
         mlcl.mailer = this;
         this.molecuel.on('mlcl::queue::init:post', (queue) => {
-            console.log('queue init at mailer');
             this.queue = queue;
             if (this.molecuel.serverroles && this.molecuel.serverroles.worker) {
                 let qname = 'mlcl::mailer::sendq';
                 let chan = this.queue.getChannel();
-                chan.then(function (ch) {
+                chan.then((ch) => {
                     ch.assertQueue(qname);
                     ch.prefetch(50);
-                    ch.consume(qname, function (msg) {
+                    ch.consume(qname, (msg) => {
                         let m = msg.content.toString();
-                        console.log('CHANNEL msg: ' + m);
+                        this.molecuel.log.debug('mlcl::mailer::queue::in::message: ' + m);
+                        ch.ack(msg);
                     });
-                }).then(null, function (err) {
-                    this.molecuel.log.error('mlcl_mailer', err);
+                }).then(null, function (error) {
+                    this.molecuel.log.error('mlcl_mailer', error);
                 });
             }
         });
@@ -117,13 +117,15 @@ class mlcl_mailer {
     sendToQ(qobject) {
         if (qobject.from && qobject.to && qobject.subject && qobject.template) {
             this.molecuel.log.debug('mailer', 'Sending job object to queue', qobject);
-            let qname = 'mlcl::mailer::sendToQ';
+            let qname = 'mlcl::mailer::sendq';
             let chan = this.queue.getChannel();
             chan.then((ch) => {
                 ch.assertQueue(qname);
                 ch.sendToQueue(qname, new Buffer(JSON.stringify(qobject)));
             }).then(null, (error) => {
-                this.molecuel.log.error('mailer', 'sendToQ :: error while sending to queue', error);
+                if (error) {
+                    this.molecuel.log.error('mailer', 'sendToQ :: error while sending to queue', error);
+                }
             });
         }
         else {

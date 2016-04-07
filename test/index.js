@@ -124,6 +124,9 @@ describe('mlcl_mailer', function () {
             molecuel.mailer.sendToQ(qoptions, function (error) {
                 should.not.exist(error);
             });
+            molecuel.mailer.sendToQ(qoptions, function (error) {
+                should.not.exist(error);
+            });
             done();
         });
     });
