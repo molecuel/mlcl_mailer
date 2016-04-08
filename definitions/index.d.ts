@@ -8,7 +8,7 @@ declare class mlcl_mailer {
     protected molecuel: any;
     protected queue: any;
     constructor(mlcl: any, config: any);
-    sendToQ(qobject: any): void;
+    sendToQueue(qobject: any, callback?: Function): void;
     sendMail(mailoptions: any, callback?: Function): void;
 }
 export = mlcl_mailer;

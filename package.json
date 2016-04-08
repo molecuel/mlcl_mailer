@@ -42,6 +42,7 @@
   },
   "dependencies": {
     "express-handlebars": "^3.0.0",
+    "node-uuid": "^1.4.7",
     "nodemailer": "^2.3.0",
     "nodemailer-dkim": "^1.0.4",
     "nodemailer-express-handlebars": "^2.0.0",

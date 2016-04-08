@@ -6,6 +6,7 @@ import expressHandleBars = require('express-handlebars');
 import nodemailerExpressHandlebars = require('nodemailer-express-handlebars');
 import nodemailerHtmlToText = require('nodemailer-html-to-text');
 import nodemailerSesTransport = require('nodemailer-ses-transport');
+import uuid = require('node-uuid');
 
 class mlcl_mailer {
   public static loaderversion = 2;
@@ -17,7 +18,7 @@ class mlcl_mailer {
   protected queue: any;
 
   /**
-   * mlcl_mailer constructor wants JSON
+   * mlcl_mailer constructor listens to queue and process jobs
    * @param mlcl any
    * @param config any
    * @return -
@@ -32,21 +33,33 @@ class mlcl_mailer {
       this.queue = queue;
 
       if (this.molecuel.serverroles && this.molecuel.serverroles.worker) {
-        // register task queues with the name given here
-        let qname = 'mlcl::mailer::sendq';
+
+        // register response queue with the name given here
+        let responseQname = 'mlcl::mailer:responseq';
+        let responseChan = this.queue.getChannel();
+        responseChan.then((rch) => {
+          rch.assertQueue(responseQname);
+          rch.prefetch(50);
+        });
+
+        // register send queue with the name given here
+        let qname = 'mlcl::mailer:sendq';
         let chan = this.queue.getChannel();
         chan.then((ch) => {
           ch.assertQueue(qname);
           ch.prefetch(50);
           ch.consume(qname, (msg) => {
             let m = msg.content.toString();
-            this.molecuel.log.debug('mlcl::mailer::queue::in::message: ' + m);
+            this.molecuel.log.debug('mlcl::mailer::queue::incoming::message: ' + m);
             let msgobject = JSON.parse(m);
             this.sendMail(msgobject, (err, info, mailoptions) => {
+              // Catch all err/info objects and send to response queue
               if (err) {
+                ch.sendToQueue(responseQname, new Buffer(JSON.stringify(err, info.messageId)));
                 ch.nack(msg);
               } else {
                 this.molecuel.log.debug('mlcl::mailer::queue:sent', info);
+                ch.sendToQueue(responseQname, new Buffer(JSON.stringify(msg, info.messageId)));
                 ch.ack(msg);
               }
             });
@@ -178,30 +191,38 @@ class mlcl_mailer {
   }
 
   /**
-   * mlcl_mailer::sendToQ(qobject)
+   * mlcl_mailer::sendToQueue(qobject)
    * @brief If a certain threshold of E-Mails is exeeded,
    *        incoming jobs will be forwarded to queue delegator.
    * @param qobject Object containing E-Mail message fields and values
    * @return void
    */
-  public sendToQ(qobject: any): void {
+  public sendToQueue(qobject: any, callback?: Function): void {
     // mandatory fields are from, to, subject and template
     if (qobject.from && qobject.to && qobject.subject && qobject.template) {
       this.molecuel.log.debug('mailer', 'Sending job object to queue', qobject);
-
+      qobject.uuid = uuid.v4();
       // publish task queues with the name given here
-      let qname = 'mlcl::mailer::sendq';
+      let qname = 'mlcl::mailer:sendq';
       let chan = this.queue.getChannel();
       chan.then((ch) => {
         ch.assertQueue(qname);
         ch.sendToQueue(qname, new Buffer(JSON.stringify(qobject)));
-      }).then(null, (error) => {
-        if (error) {
-          this.molecuel.log.error('mailer', 'sendToQ :: error while sending to queue', error);
+        if (callback) {
+          callback(null, qobject);
         }
-      });
+      })
+        .then(null, (error) => {
+          console.log('huhu');
+          if (error) {
+            this.molecuel.log.error('mailer', 'sendToQueue :: error while sending to queue', error);
+          }
+          if (callback) {
+            callback(error, qobject);
+          }
+        });
     } else {
-      this.molecuel.log.warn('mailer', 'sendToQ :: missing mandatory fields', qobject);
+      this.molecuel.log.warn('mailer', 'sendToQueue :: missing mandatory fields', qobject);
     }
   }
 
@@ -219,7 +240,6 @@ class mlcl_mailer {
         if (info && info.messageId) {
           messageid = info.messageId;
         }
-
         this.molecuel.log.error('mailer', 'Error while delivering mail',
           { messageId: messageid, error: error });
         this.molecuel.emit('mlcl::mailer::message:error', this, mailoptions, error);

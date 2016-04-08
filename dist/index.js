@@ -4,6 +4,7 @@ const expressHandleBars = require('express-handlebars');
 const nodemailerExpressHandlebars = require('nodemailer-express-handlebars');
 const nodemailerHtmlToText = require('nodemailer-html-to-text');
 const nodemailerSesTransport = require('nodemailer-ses-transport');
+const uuid = require('node-uuid');
 class mlcl_mailer {
     constructor(mlcl, config) {
         this.molecuel = mlcl;
@@ -11,21 +12,29 @@ class mlcl_mailer {
         this.molecuel.on('mlcl::queue::init:post', (queue) => {
             this.queue = queue;
             if (this.molecuel.serverroles && this.molecuel.serverroles.worker) {
-                let qname = 'mlcl::mailer::sendq';
+                let responseQname = 'mlcl::mailer:responseq';
+                let responseChan = this.queue.getChannel();
+                responseChan.then((rch) => {
+                    rch.assertQueue(responseQname);
+                    rch.prefetch(50);
+                });
+                let qname = 'mlcl::mailer:sendq';
                 let chan = this.queue.getChannel();
                 chan.then((ch) => {
                     ch.assertQueue(qname);
                     ch.prefetch(50);
                     ch.consume(qname, (msg) => {
                         let m = msg.content.toString();
-                        this.molecuel.log.debug('mlcl::mailer::queue::in::message: ' + m);
+                        this.molecuel.log.debug('mlcl::mailer::queue::incoming::message: ' + m);
                         let msgobject = JSON.parse(m);
                         this.sendMail(msgobject, (err, info, mailoptions) => {
                             if (err) {
+                                ch.sendToQueue(responseQname, new Buffer(JSON.stringify(err, info.messageId)));
                                 ch.nack(msg);
                             }
                             else {
                                 this.molecuel.log.debug('mlcl::mailer::queue:sent', info);
+                                ch.sendToQueue(responseQname, new Buffer(JSON.stringify(msg, info.messageId)));
                                 ch.ack(msg);
                             }
                         });
@@ -123,22 +132,31 @@ class mlcl_mailer {
             }
         }
     }
-    sendToQ(qobject) {
+    sendToQueue(qobject, callback) {
         if (qobject.from && qobject.to && qobject.subject && qobject.template) {
             this.molecuel.log.debug('mailer', 'Sending job object to queue', qobject);
-            let qname = 'mlcl::mailer::sendq';
+            qobject.uuid = uuid.v4();
+            let qname = 'mlcl::mailer:sendq';
             let chan = this.queue.getChannel();
             chan.then((ch) => {
                 ch.assertQueue(qname);
                 ch.sendToQueue(qname, new Buffer(JSON.stringify(qobject)));
-            }).then(null, (error) => {
+                if (callback) {
+                    callback(null, qobject);
+                }
+            })
+                .then(null, (error) => {
+                console.log('huhu');
                 if (error) {
-                    this.molecuel.log.error('mailer', 'sendToQ :: error while sending to queue', error);
+                    this.molecuel.log.error('mailer', 'sendToQueue :: error while sending to queue', error);
+                }
+                if (callback) {
+                    callback(error, qobject);
                 }
             });
         }
         else {
-            this.molecuel.log.warn('mailer', 'sendToQ :: missing mandatory fields', qobject);
+            this.molecuel.log.warn('mailer', 'sendToQueue :: missing mandatory fields', qobject);
         }
     }
     sendMail(mailoptions, callback) {

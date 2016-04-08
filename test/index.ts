@@ -13,8 +13,10 @@ class _mlcl extends event.EventEmitter {
 }
 
 describe('mlcl_mailer', function() {
-  var mlcl;
-  var molecuel;
+  let mlcl;
+  let molecuel;
+  let uuid1;
+  let uuid2;
 
   before(function(done) {
 
@@ -162,22 +164,45 @@ describe('mlcl_mailer', function() {
         }
       }
 
-      molecuel.mailer.sendToQ(qoptions, function(error) {
+      molecuel.mailer.sendToQueue(qoptions, function(error, qobject) {
         should.not.exist(error);
+        should.exist(qobject.uuid);
+        uuid1 = qobject.uuid;
+        done();
       });
-
-      molecuel.mailer.sendToQ(qoptions, function(error) {
-        should.not.exist(error);
-      });
-
-      molecuel.mailer.sendToQ(qoptions, function(error) {
-        should.not.exist(error);
-      });
-
-      done();
     });
 
+    it('should send second mail to queue', function(done) {
+      // setup Qdata with E-Mail options
+      let qoptions = {
+        from: 'murat.calis@inspirationlabs.com',
+        to: 'murat.calis@inspirationlabs.com',
+        cc: 'murat.calis@inspirationlabs.com',
+        subject: 'Subject',
+        template: 'email',
+        data: {
+          anrede: 'Herr',
+          name: 'Hans',
+          vorname: 'Meiser'
+        },
+        options: {
+          option1: 'option_value1',
+          option2: 'option_value2'
+        }
+      }
 
+      molecuel.mailer.sendToQueue(qoptions, function(error, qobject) {
+        should.not.exist(error);
+        should.exist(qobject.uuid);
+        uuid2 = qobject.uuid;
+        done();
+      });
+    });
 
+    it('should wait to send the message', function(done) {
+      setTimeout(() => {
+        done();
+      }, 1000);
+    })
   });
 });
