@@ -40,6 +40,10 @@ class mlcl_mailer {
         responseChan.then((rch) => {
           rch.assertQueue(responseQname);
           rch.prefetch(50);
+          rch.consume(responseQname, (msg) => {
+            let m = msg.content.toString();
+            this.molecuel.log.debug('mlcl::mailer::queue::response:message: ' + m);
+          });
         });
 
         // register send queue with the name given here
@@ -50,16 +54,16 @@ class mlcl_mailer {
           ch.prefetch(50);
           ch.consume(qname, (msg) => {
             let m = msg.content.toString();
-            this.molecuel.log.debug('mlcl::mailer::queue::incoming::message: ' + m);
+            this.molecuel.log.debug('mlcl::mailer::queue::send:message: ' + m);
             let msgobject = JSON.parse(m);
             this.sendMail(msgobject, (err, info, mailoptions) => {
               // Catch all err/info objects and send to response queue
               if (err) {
-                ch.sendToQueue(responseQname, new Buffer(JSON.stringify(err, info.messageId)));
+                ch.sendToQueue(responseQname, new Buffer(JSON.stringify(err)));
                 ch.nack(msg);
               } else {
                 this.molecuel.log.debug('mlcl::mailer::queue:sent', info);
-                ch.sendToQueue(responseQname, new Buffer(JSON.stringify(msg, info.messageId)));
+                ch.sendToQueue(responseQname, new Buffer(JSON.stringify(m)));
                 ch.ack(msg);
               }
             });
@@ -193,15 +197,15 @@ class mlcl_mailer {
   /**
    * mlcl_mailer::sendToQueue(qobject)
    * @brief If a certain threshold of E-Mails is exeeded,
-   *        incoming jobs will be forwarded to queue delegator.
+   *        incoming jobs will be forwarded to queue.
    * @param qobject Object containing E-Mail message fields and values
    * @return void
    */
   public sendToQueue(qobject: any, callback?: Function): void {
     // mandatory fields are from, to, subject and template
     if (qobject.from && qobject.to && qobject.subject && qobject.template) {
-      this.molecuel.log.debug('mailer', 'Sending job object to queue', qobject);
       qobject.uuid = uuid.v4();
+      this.molecuel.log.debug('mailer', 'Sending job object to queue', qobject);
       // publish task queues with the name given here
       let qname = 'mlcl::mailer:sendq';
       let chan = this.queue.getChannel();

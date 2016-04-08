@@ -17,6 +17,10 @@ class mlcl_mailer {
                 responseChan.then((rch) => {
                     rch.assertQueue(responseQname);
                     rch.prefetch(50);
+                    rch.consume(responseQname, (msg) => {
+                        let m = msg.content.toString();
+                        this.molecuel.log.debug('mlcl::mailer::queue::response:message: ' + m);
+                    });
                 });
                 let qname = 'mlcl::mailer:sendq';
                 let chan = this.queue.getChannel();
@@ -25,16 +29,16 @@ class mlcl_mailer {
                     ch.prefetch(50);
                     ch.consume(qname, (msg) => {
                         let m = msg.content.toString();
-                        this.molecuel.log.debug('mlcl::mailer::queue::incoming::message: ' + m);
+                        this.molecuel.log.debug('mlcl::mailer::queue::send:message: ' + m);
                         let msgobject = JSON.parse(m);
                         this.sendMail(msgobject, (err, info, mailoptions) => {
                             if (err) {
-                                ch.sendToQueue(responseQname, new Buffer(JSON.stringify(err, info.messageId)));
+                                ch.sendToQueue(responseQname, new Buffer(JSON.stringify(err)));
                                 ch.nack(msg);
                             }
                             else {
                                 this.molecuel.log.debug('mlcl::mailer::queue:sent', info);
-                                ch.sendToQueue(responseQname, new Buffer(JSON.stringify(msg, info.messageId)));
+                                ch.sendToQueue(responseQname, new Buffer(JSON.stringify(m)));
                                 ch.ack(msg);
                             }
                         });
@@ -134,8 +138,8 @@ class mlcl_mailer {
     }
     sendToQueue(qobject, callback) {
         if (qobject.from && qobject.to && qobject.subject && qobject.template) {
-            this.molecuel.log.debug('mailer', 'Sending job object to queue', qobject);
             qobject.uuid = uuid.v4();
+            this.molecuel.log.debug('mailer', 'Sending job object to queue', qobject);
             let qname = 'mlcl::mailer:sendq';
             let chan = this.queue.getChannel();
             chan.then((ch) => {
