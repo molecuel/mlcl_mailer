@@ -5,6 +5,7 @@ const nodemailerExpressHandlebars = require('nodemailer-express-handlebars');
 const nodemailerHtmlToText = require('nodemailer-html-to-text');
 const nodemailerSesTransport = require('nodemailer-ses-transport');
 const uuid = require('node-uuid');
+const async = require('async');
 class mlcl_mailer {
     constructor(mlcl, config) {
         this.molecuel = mlcl;
@@ -21,7 +22,17 @@ class mlcl_mailer {
                     rch.consume(responseQname, (msg) => {
                         let m = msg.content.toString();
                         let msgobject = JSON.parse(m);
-                        rch.ack(msg);
+                        let execHandler = this.execHandler(rch, msg);
+                        async.doWhilst((callback) => {
+                            let res = execHandler.next();
+                            callback(null, res);
+                        }, (res) => {
+                            let result = res.done;
+                            return !res.done;
+                        }, (err) => {
+                            console.log(err);
+                            console.log('done iter1');
+                        });
                     });
                 });
                 let qname = 'mlcl::mailer:sendq';
@@ -39,12 +50,14 @@ class mlcl_mailer {
                                     status: 'error',
                                     data: err
                                 };
+                                ch.nack(msg);
                             }
                             else {
                                 returnmsgobject = {
                                     status: 'success',
                                     data: msgobject
                                 };
+                                ch.ack(msg);
                             }
                             ch.sendToQueue(responseQname, new Buffer(JSON.stringify(returnmsgobject)));
                         });
@@ -188,14 +201,18 @@ class mlcl_mailer {
         });
     }
     registerHandler(handlerfunc) {
-        console.log('--registerHandler--');
-        console.log(handlerfunc);
         this.stack.push(handlerfunc);
     }
-    execHandler(responseobject) {
-        console.log('--execHandler--');
-        console.log(responseobject);
-        return true;
+    *execHandler(channel, responseobject) {
+        try {
+            for (let i in this.stack) {
+                yield this.stack[i](responseobject);
+            }
+            channel.ack(responseobject);
+        }
+        catch (err) {
+            channel.nack(responseobject);
+        }
     }
 }
 mlcl_mailer.loaderversion = 2;

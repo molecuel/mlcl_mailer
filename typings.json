@@ -21,6 +21,7 @@
   },
   "ambientDevDependencies": {
     "amqplib": "registry:dt/amqplib#0.3.0+20160317120654",
+    "async": "registry:dt/async#1.4.2+20160316155526",
     "express-handlebars": "registry:dt/express-handlebars#0.0.0+20160316155526",
     "mocha": "registry:dt/mocha#2.2.5+20160317120654",
     "nodemailer": "registry:dt/nodemailer#1.3.2+20160316155526",

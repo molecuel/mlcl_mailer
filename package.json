@@ -41,6 +41,7 @@
     "typescript": "^1.8.2"
   },
   "dependencies": {
+    "async": "^2.0.0-rc.3",
     "express-handlebars": "^3.0.0",
     "node-uuid": "^1.4.7",
     "nodemailer": "^2.3.0",

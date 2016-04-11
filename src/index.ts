@@ -7,6 +7,7 @@ import nodemailerExpressHandlebars = require('nodemailer-express-handlebars');
 import nodemailerHtmlToText = require('nodemailer-html-to-text');
 import nodemailerSesTransport = require('nodemailer-ses-transport');
 import uuid = require('node-uuid');
+import async = require('async');
 
 class mlcl_mailer {
   public static loaderversion = 2;
@@ -47,10 +48,20 @@ class mlcl_mailer {
           rch.consume(responseQname, (msg) => {
             let m = msg.content.toString();
             let msgobject = JSON.parse(m);
-            //this.molecuel.log.debug('mlcl::mailer::queue::response:message: ' + m);
-            //console.log('mlcl::mailer::queue::response::message:uuid ');
-            //console.log(JSON.parse(m).data.uuid);
-            rch.ack(msg);
+            //  this.molecuel.log.debug('mlcl::mailer::queue::response:message: ' + m);
+            //  console.log('mlcl::mailer::queue::response::message:uuid ');
+            //  console.log(JSON.parse(m).data.uuid);
+            let execHandler = this.execHandler(rch, msg);
+            async.doWhilst((callback) => {
+              let res = execHandler.next();
+              callback(null, res);
+            }, (res) => {
+              let result: boolean = res.done;
+              return !res.done;
+            }, (err) => {
+              console.log(err);
+              console.log('done iter1');
+            });
           });
         });
 
@@ -62,23 +73,26 @@ class mlcl_mailer {
           ch.prefetch(50);
           ch.consume(qname, (msg) => {
             let m = msg.content.toString();
-            //this.molecuel.log.debug('mlcl::mailer::queue::send:message: ' + m);
+
+            //  this.molecuel.log.debug('mlcl::mailer::queue::send:message: ' + m);
             let msgobject = JSON.parse(m);
-            // console.log('uuid');
-            // console.log(msgobject.uuid);
+
             this.sendMail(msgobject, (err, info, mailoptions) => {
-              let returnmsgobject: {};
+              let returnmsgobject;
+
               // Catch all err/success objects and send to response queue
               if (err) {
                 returnmsgobject = {
                   status: 'error',
                   data: err
                 };
+                ch.nack(msg);
               } else {
                 returnmsgobject = {
                   status: 'success',
                   data: msgobject
                 };
+                ch.ack(msg);
               }
               ch.sendToQueue(responseQname, new Buffer(JSON.stringify(returnmsgobject)));
             });
@@ -220,8 +234,8 @@ class mlcl_mailer {
     // mandatory fields are from, to, subject and template
     if (qobject.from && qobject.to && qobject.subject && qobject.template) {
       qobject.uuid = uuid.v4();
-      //this.molecuel.log.debug('mailer', 'Sending job object to queue', qobject);
-      // publish task queues with the name given here
+      //  this.molecuel.log.debug('mailer', 'Sending job object to queue', qobject);
+      //  publish task queues with the name given here
       let qname = 'mlcl::mailer:sendq';
       let chan = this.queue.getChannel();
       chan.then((ch) => {
@@ -273,17 +287,19 @@ class mlcl_mailer {
     });
   }
 
-
   public registerHandler(handlerfunc: Function): void {
-    console.log('--registerHandler--')
-    console.log(handlerfunc);
     this.stack.push(handlerfunc);
   }
 
-  private execHandler(responseobject): boolean {
-    console.log('--execHandler--');
-    console.log(responseobject);
-    return true;
+  private *execHandler(channel, responseobject) {
+    try {
+      for (let i in this.stack) {
+        yield this.stack[i](responseobject);
+      }
+      channel.ack(responseobject);
+    } catch (err) {
+      channel.nack(responseobject);
+    }
   }
 }
 

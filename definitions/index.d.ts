@@ -12,6 +12,6 @@ declare class mlcl_mailer {
     sendToQueue(qobject: any, callback?: Function): void;
     sendMail(mailoptions: any, callback?: Function): void;
     registerHandler(handlerfunc: Function): void;
-    private execHandler(responseobject);
+    private execHandler(channel, responseobject);
 }
 export = mlcl_mailer;
