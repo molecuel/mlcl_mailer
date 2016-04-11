@@ -61,6 +61,14 @@ describe('mlcl_mailer', function () {
     describe('mailer', function () {
         it('should initialize', function (done) {
             new mlcl_mailer(molecuel, {});
+            let register1 = function (obj, callback) {
+                console.log('r1');
+            };
+            let register2 = function (obj, callback) {
+                console.log('r2');
+            };
+            molecuel.mailer.registerHandler(register1);
+            molecuel.mailer.registerHandler(register2);
             done();
         });
         it('should send a mail', function (done) {

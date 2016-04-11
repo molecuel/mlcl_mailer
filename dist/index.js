@@ -9,6 +9,7 @@ class mlcl_mailer {
     constructor(mlcl, config) {
         this.molecuel = mlcl;
         mlcl.mailer = this;
+        this.stack = [];
         this.molecuel.on('mlcl::queue::init:post', (queue) => {
             this.queue = queue;
             if (this.molecuel.serverroles && this.molecuel.serverroles.worker) {
@@ -19,7 +20,8 @@ class mlcl_mailer {
                     rch.prefetch(50);
                     rch.consume(responseQname, (msg) => {
                         let m = msg.content.toString();
-                        this.molecuel.log.debug('mlcl::mailer::queue::response:message: ' + m);
+                        let msgobject = JSON.parse(m);
+                        rch.ack(msg);
                     });
                 });
                 let qname = 'mlcl::mailer:sendq';
@@ -29,18 +31,22 @@ class mlcl_mailer {
                     ch.prefetch(50);
                     ch.consume(qname, (msg) => {
                         let m = msg.content.toString();
-                        this.molecuel.log.debug('mlcl::mailer::queue::send:message: ' + m);
                         let msgobject = JSON.parse(m);
                         this.sendMail(msgobject, (err, info, mailoptions) => {
+                            let returnmsgobject;
                             if (err) {
-                                ch.sendToQueue(responseQname, new Buffer(JSON.stringify(err)));
-                                ch.nack(msg);
+                                returnmsgobject = {
+                                    status: 'error',
+                                    data: err
+                                };
                             }
                             else {
-                                this.molecuel.log.debug('mlcl::mailer::queue:sent', info);
-                                ch.sendToQueue(responseQname, new Buffer(JSON.stringify(m)));
-                                ch.ack(msg);
+                                returnmsgobject = {
+                                    status: 'success',
+                                    data: msgobject
+                                };
                             }
+                            ch.sendToQueue(responseQname, new Buffer(JSON.stringify(returnmsgobject)));
                         });
                     });
                 }).then(null, function (error) {
@@ -139,7 +145,6 @@ class mlcl_mailer {
     sendToQueue(qobject, callback) {
         if (qobject.from && qobject.to && qobject.subject && qobject.template) {
             qobject.uuid = uuid.v4();
-            this.molecuel.log.debug('mailer', 'Sending job object to queue', qobject);
             let qname = 'mlcl::mailer:sendq';
             let chan = this.queue.getChannel();
             chan.then((ch) => {
@@ -150,7 +155,7 @@ class mlcl_mailer {
                 }
             })
                 .then(null, (error) => {
-                console.log('huhu');
+                console.log('error in sendToQueue');
                 if (error) {
                     this.molecuel.log.error('mailer', 'sendToQueue :: error while sending to queue', error);
                 }
@@ -181,6 +186,16 @@ class mlcl_mailer {
                 callback(error, info, mailoptions);
             }
         });
+    }
+    registerHandler(handlerfunc) {
+        console.log('--registerHandler--');
+        console.log(handlerfunc);
+        this.stack.push(handlerfunc);
+    }
+    execHandler(responseobject) {
+        console.log('--execHandler--');
+        console.log(responseobject);
+        return true;
     }
 }
 mlcl_mailer.loaderversion = 2;

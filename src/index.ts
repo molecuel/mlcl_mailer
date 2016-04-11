@@ -16,6 +16,7 @@ class mlcl_mailer {
   protected templateEngine: any;
   protected molecuel: any;
   protected queue: any;
+  private stack: Array<Function>;
 
   /**
    * mlcl_mailer constructor listens to queue and process jobs
@@ -27,6 +28,9 @@ class mlcl_mailer {
     this.molecuel = mlcl;
 
     mlcl.mailer = this;
+
+    // API custom functions to handle response queue messages
+    this.stack = [];
 
     // Register with RabbitMQ queue jobs
     this.molecuel.on('mlcl::queue::init:post', (queue) => {
@@ -42,7 +46,11 @@ class mlcl_mailer {
           rch.prefetch(50);
           rch.consume(responseQname, (msg) => {
             let m = msg.content.toString();
-            this.molecuel.log.debug('mlcl::mailer::queue::response:message: ' + m);
+            let msgobject = JSON.parse(m);
+            //this.molecuel.log.debug('mlcl::mailer::queue::response:message: ' + m);
+            //console.log('mlcl::mailer::queue::response::message:uuid ');
+            //console.log(JSON.parse(m).data.uuid);
+            rch.ack(msg);
           });
         });
 
@@ -54,18 +62,25 @@ class mlcl_mailer {
           ch.prefetch(50);
           ch.consume(qname, (msg) => {
             let m = msg.content.toString();
-            this.molecuel.log.debug('mlcl::mailer::queue::send:message: ' + m);
+            //this.molecuel.log.debug('mlcl::mailer::queue::send:message: ' + m);
             let msgobject = JSON.parse(m);
+            // console.log('uuid');
+            // console.log(msgobject.uuid);
             this.sendMail(msgobject, (err, info, mailoptions) => {
-              // Catch all err/info objects and send to response queue
+              let returnmsgobject: {};
+              // Catch all err/success objects and send to response queue
               if (err) {
-                ch.sendToQueue(responseQname, new Buffer(JSON.stringify(err)));
-                ch.nack(msg);
+                returnmsgobject = {
+                  status: 'error',
+                  data: err
+                };
               } else {
-                this.molecuel.log.debug('mlcl::mailer::queue:sent', info);
-                ch.sendToQueue(responseQname, new Buffer(JSON.stringify(m)));
-                ch.ack(msg);
+                returnmsgobject = {
+                  status: 'success',
+                  data: msgobject
+                };
               }
+              ch.sendToQueue(responseQname, new Buffer(JSON.stringify(returnmsgobject)));
             });
           });
         }).then(null, function(error) {
@@ -205,7 +220,7 @@ class mlcl_mailer {
     // mandatory fields are from, to, subject and template
     if (qobject.from && qobject.to && qobject.subject && qobject.template) {
       qobject.uuid = uuid.v4();
-      this.molecuel.log.debug('mailer', 'Sending job object to queue', qobject);
+      //this.molecuel.log.debug('mailer', 'Sending job object to queue', qobject);
       // publish task queues with the name given here
       let qname = 'mlcl::mailer:sendq';
       let chan = this.queue.getChannel();
@@ -217,7 +232,7 @@ class mlcl_mailer {
         }
       })
         .then(null, (error) => {
-          console.log('huhu');
+          console.log('error in sendToQueue');
           if (error) {
             this.molecuel.log.error('mailer', 'sendToQueue :: error while sending to queue', error);
           }
@@ -257,6 +272,22 @@ class mlcl_mailer {
       }
     });
   }
+
+
+  public registerHandler(handlerfunc: Function): void {
+    console.log('--registerHandler--')
+    console.log(handlerfunc);
+    this.stack.push(handlerfunc);
+  }
+
+  private execHandler(responseobject): boolean {
+    console.log('--execHandler--');
+    console.log(responseobject);
+    return true;
+  }
 }
+
+
+
 
 export = mlcl_mailer;

@@ -7,8 +7,11 @@ declare class mlcl_mailer {
     protected templateEngine: any;
     protected molecuel: any;
     protected queue: any;
+    private stack;
     constructor(mlcl: any, config: any);
     sendToQueue(qobject: any, callback?: Function): void;
     sendMail(mailoptions: any, callback?: Function): void;
+    registerHandler(handlerfunc: Function): void;
+    private execHandler(responseobject);
 }
 export = mlcl_mailer;
