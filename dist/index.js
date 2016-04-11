@@ -20,14 +20,13 @@ class mlcl_mailer {
                     rch.assertQueue(responseQname);
                     rch.prefetch(50);
                     rch.consume(responseQname, (msg) => {
-                        let m = msg.content.toString();
-                        let msgobject = JSON.parse(m);
                         let execHandler = this.execHandler(rch, msg);
                         async.doWhilst((callback) => {
                             let res = execHandler.next();
                             callback(null, res);
                         }, (res) => {
                             let result = res.done;
+                            console.log(result);
                             return !res.done;
                         }, (err) => {
                             console.log(err);

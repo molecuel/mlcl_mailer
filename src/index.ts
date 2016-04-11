@@ -10,14 +10,14 @@ import uuid = require('node-uuid');
 import async = require('async');
 
 class mlcl_mailer {
-  public static loaderversion = 2;
-  public transporter: nodemailer.Transporter;
-  public config: any;
-  protected viewEngine: any;
-  protected templateEngine: any;
-  protected molecuel: any;
-  protected queue: any;
-  private stack: Array<Function>;
+  public static loaderversion = 2;              // version number
+  public transporter: nodemailer.Transporter;   // a nodemailer object
+  public config: any;                           // configurations mlcl_mailer
+  protected viewEngine: any;                    // View renderer
+  protected templateEngine: any;                // Mail templates
+  protected molecuel: any;                      // save a copy of parent molecuel
+  protected queue: any;                         // rabbit queue
+  private stack: Array<Function>;               // custom functions to use as processor in response handling
 
   /**
    * mlcl_mailer constructor listens to queue and process jobs
@@ -37,6 +37,7 @@ class mlcl_mailer {
     this.molecuel.on('mlcl::queue::init:post', (queue) => {
       this.queue = queue;
 
+      // Worker mode ( see docker run string )
       if (this.molecuel.serverroles && this.molecuel.serverroles.worker) {
 
         // register response queue with the name given here
@@ -46,17 +47,18 @@ class mlcl_mailer {
           rch.assertQueue(responseQname);
           rch.prefetch(50);
           rch.consume(responseQname, (msg) => {
-            let m = msg.content.toString();
-            let msgobject = JSON.parse(m);
+            //  let m = msg.content.toString();
             //  this.molecuel.log.debug('mlcl::mailer::queue::response:message: ' + m);
-            //  console.log('mlcl::mailer::queue::response::message:uuid ');
-            //  console.log(JSON.parse(m).data.uuid);
+
+            // Asynchronously process the response queue stack
+            // Async 1.4.2 line 125 index.d.ts ( see issue https://github.com/DefinitelyTyped/DefinitelyTyped/issues/8937 )
             let execHandler = this.execHandler(rch, msg);
             async.doWhilst((callback) => {
               let res = execHandler.next();
               callback(null, res);
             }, (res) => {
               let result: boolean = res.done;
+              console.log(result);
               return !res.done;
             }, (err) => {
               console.log(err);
@@ -78,20 +80,23 @@ class mlcl_mailer {
             let msgobject = JSON.parse(m);
 
             this.sendMail(msgobject, (err, info, mailoptions) => {
+              // save the state in this object
               let returnmsgobject;
 
-              // Catch all err/success objects and send to response queue
+              // Catch all err/success and send returnmsgobject to response queue
               if (err) {
                 returnmsgobject = {
                   status: 'error',
                   data: err
                 };
+                // Negative acknowledgement of sendMail
                 ch.nack(msg);
               } else {
                 returnmsgobject = {
                   status: 'success',
                   data: msgobject
                 };
+                // Positive acknowledgement of sendMail
                 ch.ack(msg);
               }
               ch.sendToQueue(responseQname, new Buffer(JSON.stringify(returnmsgobject)));
@@ -128,7 +133,6 @@ class mlcl_mailer {
       this.transporter = nodemailer.createTransport(
         this.config
       );
-
 
       // init view engine for html mails
       if (mlcl.config.smtp.templateDir) {
@@ -287,10 +291,21 @@ class mlcl_mailer {
     });
   }
 
+  /**
+   * registerHandler takes custom functions to process a response queue
+   * @param handlerfunc Function
+   * @return void
+   */
   public registerHandler(handlerfunc: Function): void {
     this.stack.push(handlerfunc);
   }
 
+  /**
+   * execHandler Generator function (Iterator) processes a queue
+   * @param channel amqplib channel
+   * @param responseobject original queue message to ack/nack
+   * @return -
+   */
   private *execHandler(channel, responseobject) {
     try {
       for (let i in this.stack) {
@@ -302,8 +317,5 @@ class mlcl_mailer {
     }
   }
 }
-
-
-
 
 export = mlcl_mailer;
