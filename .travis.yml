@@ -1,0 +1,9 @@
+language: node_js
+services:
+  - postfix
+  - rabbitmq
+node_js:
+  - "4.1"
+before_script:
+  - sleep 30
+sudo: false

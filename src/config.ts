@@ -1,4 +1,5 @@
-var config;
+'use strict';
+let config;
 
 config = {
   name: 'mailer'

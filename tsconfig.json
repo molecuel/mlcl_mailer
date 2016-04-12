@@ -1,7 +1,40 @@
 {
+  "compileOnSave": false,
   "compilerOptions": {
     "target": "es6",
     "module": "commonjs",
-    "declaration": true
+    "declaration": true,
+    "removeComments": true,
+    "preserveConstEnums": true,
+    "sourceMap": false
+  },
+  "files": [
+    "typings/main.d.ts",
+    "typings_override/main.d.ts",
+    "src/index.ts",
+    "src/config.ts"
+  ],
+  "exclude": [
+    "typings/browser.d.ts",
+    "typings/browser",
+    "node_modules"
+  ],
+  "atom": {
+    "rewriteTsconfig": false,
+    "formatOnSave": true
+  },
+  "formatCodeOptions": {
+    "indentSize": 2,
+    "tabSize": 2,
+    "newLineCharacter": "\r\n",
+    "convertTabsToSpaces": true,
+    "insertSpaceAfterCommaDelimiter": true,
+    "insertSpaceAfterSemicolonInForStatements": true,
+    "insertSpaceBeforeAndAfterBinaryOperators": true,
+    "insertSpaceAfterKeywordsInControlFlowStatements": true,
+    "insertSpaceAfterFunctionKeywordForAnonymousFunctions": false,
+    "insertSpaceAfterOpeningAndBeforeClosingNonemptyParenthesis": false,
+    "placeOpenBraceOnNewLineForFunctions": false,
+    "placeOpenBraceOnNewLineForControlBlocks": false
   }
 }
