@@ -57,7 +57,6 @@ class mlcl_mailer {
               let res = execHandler.next();
               callback(null, res);
             }, (res) => {
-              let result: boolean = res.done;
               return !res.done;
             }, (err) => {
               if (err) {

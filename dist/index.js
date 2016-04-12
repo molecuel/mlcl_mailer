@@ -27,7 +27,6 @@ class mlcl_mailer {
                             let res = execHandler.next();
                             callback(null, res);
                         }, (res) => {
-                            let result = res.done;
                             return !res.done;
                         }, (err) => {
                             if (err) {
