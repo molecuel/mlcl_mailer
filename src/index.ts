@@ -13,7 +13,7 @@ class mlcl_mailer {
   public static loaderversion = 2;              // version number
   public transporter: nodemailer.Transporter;   // a nodemailer object
   public config: any;                           // configurations mlcl_mailer
-  protected viewEngine: any;                    // View renderer
+  protected viewEngine: Exphbs;                    // View renderer
   protected templateEngine: any;                // Mail templates
   protected molecuel: any;                      // save a copy of parent molecuel
   protected queue: any;                         // rabbit queue

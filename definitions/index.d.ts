@@ -3,7 +3,7 @@ declare class mlcl_mailer {
     static loaderversion: number;
     transporter: nodemailer.Transporter;
     config: any;
-    protected viewEngine: any;
+    protected viewEngine: Exphbs;
     protected templateEngine: any;
     protected molecuel: any;
     protected queue: any;

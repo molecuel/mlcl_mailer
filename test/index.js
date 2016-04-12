@@ -37,12 +37,8 @@ describe('mlcl_mailer', function () {
             smtp: {
                 enabled: true,
                 debug: true,
-                host: '192.168.99.100',
+                host: '127.0.0.1',
                 tlsUnauth: true,
-                auth: {
-                    user: 'molecuel',
-                    pass: 'molecuel'
-                },
                 templateDir: __dirname + '/templates'
             },
             ses: {
