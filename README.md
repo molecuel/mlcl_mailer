@@ -1,3 +1,11 @@
+[![Build Status](https://travis-ci.org/molecuel/mlcl_mailer.svg?branch=master)](https://travis-ci.org/molecuel/mlcl_mailer)
+
+[![NPM](https://nodei.co/npm-dl/mlcl_mailer.png?months=1)](https://nodei.co/npm/mlcl_mailer/)
+
+[![NPM](https://nodei.co/npm/mlcl_mailer.png?downloads=true&stars=true)](https://nodei.co/npm/mlcl_mailer/)
+
+[![NPM version](https://badge.fury.io/js/mlcl_mailer@2x.png)](http://badge.fury.io/js/mlcl_mailer)
+
 # mlcl_mailer
 Mailer plugin for molecuel
 
