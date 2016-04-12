@@ -62,13 +62,14 @@ describe('mlcl_mailer', function () {
         it('should initialize', function (done) {
             new mlcl_mailer(molecuel, {});
             let register1 = function (obj) {
-                console.log('r1');
             };
             let register2 = function (obj) {
-                console.log('r2');
+            };
+            let register3 = function (obj) {
             };
             molecuel.mailer.registerHandler(register1);
             molecuel.mailer.registerHandler(register2);
+            molecuel.mailer.registerHandler(register3);
             done();
         });
         it('should send a mail', function (done) {
@@ -120,8 +121,8 @@ describe('mlcl_mailer', function () {
                 template: 'email',
                 data: {
                     anrede: 'Herr',
-                    name: 'Hans',
-                    vorname: 'Meiser'
+                    name: 'Doe',
+                    vorname: 'Jon'
                 },
                 options: {
                     option1: 'option_value1',
@@ -144,8 +145,8 @@ describe('mlcl_mailer', function () {
                 template: 'email',
                 data: {
                     anrede: 'Herr',
-                    name: 'Hans',
-                    vorname: 'Meiser'
+                    name: 'Doe',
+                    vorname: 'Jon'
                 },
                 options: {
                     option1: 'option_value1',

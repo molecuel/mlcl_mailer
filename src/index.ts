@@ -47,8 +47,8 @@ class mlcl_mailer {
           rch.assertQueue(responseQname);
           rch.prefetch(50);
           rch.consume(responseQname, (msg) => {
-            //  let m = msg.content.toString();
-            //  this.molecuel.log.debug('mlcl::mailer::queue::response:message: ' + m);
+            let parsed = JSON.parse(msg.content);
+            this.molecuel.log.debug('mlcl::mailer::queue::response::message:uuid ' + parsed.data.uuid);
 
             // Asynchronously process the response queue stack
             // Async 1.4.2 line 125 index.d.ts ( see issue https://github.com/DefinitelyTyped/DefinitelyTyped/issues/8937 )
@@ -58,11 +58,11 @@ class mlcl_mailer {
               callback(null, res);
             }, (res) => {
               let result: boolean = res.done;
-              console.log(result);
               return !res.done;
             }, (err) => {
-              console.log(err);
-              console.log('done iter1');
+              if (err) {
+                this.molecuel.log.error('mlcl::mailer::queue::response::async:error: ' + err);
+              }
             });
           });
         });
@@ -293,6 +293,8 @@ class mlcl_mailer {
 
   /**
    * registerHandler takes custom functions to process a response queue
+   * Custom function must have a single parameter which will become a responseobject
+   *
    * @param handlerfunc Function
    * @return void
    */

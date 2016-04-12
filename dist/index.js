@@ -20,17 +20,19 @@ class mlcl_mailer {
                     rch.assertQueue(responseQname);
                     rch.prefetch(50);
                     rch.consume(responseQname, (msg) => {
+                        let parsed = JSON.parse(msg.content);
+                        this.molecuel.log.debug('mlcl::mailer::queue::response::message:uuid ' + parsed.data.uuid);
                         let execHandler = this.execHandler(rch, msg);
                         async.doWhilst((callback) => {
                             let res = execHandler.next();
                             callback(null, res);
                         }, (res) => {
                             let result = res.done;
-                            console.log(result);
                             return !res.done;
                         }, (err) => {
-                            console.log(err);
-                            console.log('done iter1');
+                            if (err) {
+                                this.molecuel.log.error('mlcl::mailer::queue::response::async:error: ' + err);
+                            }
                         });
                     });
                 });
