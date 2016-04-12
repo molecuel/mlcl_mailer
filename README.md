@@ -5,9 +5,13 @@ Mailer plugin for molecuel
 git clone https://github.com/molecuel/mlcl_mailer.git
 
 npm install
+
 typings install
 
 ## API
 You can register own functions to process a mail response queue.
-The registerHandler expects function(object) syntax. The function parameter
+
+The registerHandler expects **function(object)**.
+
+The function parameter
 *object* will become a stringified response object.
