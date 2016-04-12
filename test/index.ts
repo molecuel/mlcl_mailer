@@ -2,8 +2,9 @@
 import should = require('should');
 import assert = require('assert');
 import event = require('events');
-let mlcl_queue = require('mlcl_queue');
-let mlcl_mailer = require('../dist/');
+const mlcl_queue = require('mlcl_queue');
+const mlcl_mailer = require('../dist/');
+const simplesmtp = require('simplesmtp');
 
 class _mlcl extends event.EventEmitter {
   public config: any;
@@ -19,71 +20,80 @@ describe('mlcl_mailer', function() {
   let uuid2;
 
   before(function(done) {
+    let server = simplesmtp.createServer();
+    server.listen(2500, (err) => {
+      if(err) {
+        should.not.exist(err);
+      } else {
+        molecuel = new _mlcl();
 
-    molecuel = new _mlcl();
+        molecuel.log = {};
+        molecuel.log.info = console.log;
+        molecuel.log.error = console.log;
+        molecuel.log.debug = console.log;
+        molecuel.log.warn = console.log;
 
-    molecuel.log = {};
-    molecuel.log.info = console.log;
-    molecuel.log.error = console.log;
-    molecuel.log.debug = console.log;
-    molecuel.log.warn = console.log;
+        molecuel.serverroles = {};
+        molecuel.serverroles.worker = true;
 
-    molecuel.serverroles = {};
-    molecuel.serverroles.worker = true;
+        molecuel.config = {};
+        molecuel.config.queue = {
+          uri: 'amqp://localhost'
+        };
 
-    molecuel.config = {};
-    molecuel.config.queue = {
-      uri: 'amqp://localhost'
-    };
+        if (process.env.NODE_ENV === 'dockerdev') {
+          molecuel.config.queue = {
+            uri: 'amqp://192.168.99.100'
+          };
+        }
 
-    if (process.env.NODE_ENV === 'dockerdev') {
-      molecuel.config.queue = {
-        uri: 'amqp://192.168.99.100'
-      };
-    }
+        // Legacy config SMTP only
+        /*
+        molecuel.config.smtp = {
+          enabled: true,
+          debug: true,
+          host: '192.168.99.100',
+          tlsUnauth: true,
+          auth: {
+            user: 'molecuel',
+            pass: 'molecuel'
+          },
+          templateDir: __dirname + '/templates'
+        };
+        */
 
-    // Legacy config SMTP only
-    /*
-    molecuel.config.smtp = {
-      enabled: true,
-      debug: true,
-      host: '192.168.99.100',
-      tlsUnauth: true,
-      auth: {
-        user: 'molecuel',
-        pass: 'molecuel'
-      },
-      templateDir: __dirname + '/templates'
-    };
-    */
+        // Migration mailer 2.x smtp, ses, ...
+        molecuel.config.mail = {
+          enabled: true,
+          default: 'smtp',
+          smtp: {
+            enabled: true,
+            debug: true,
+            host: '127.0.0.1',
+            port: 2500,
+            tlsUnauth: true,
+            templateDir: __dirname + '/templates'
+          },
+          ses: {
+            enabled: true,
+            debug: true,
+            region: 'eu-west-1',
+            accessKeyId: 'YOUR_ACCESS_ID',
+            secretAccessKey: 'YOUR_SECRET_KEY',
+            templateDir: __dirname + '/templates'
+          }
+        }
 
-    // Migration mailer 2.x smtp, ses, ...
-    molecuel.config.mail = {
-      enabled: true,
-      default: 'smtp',
-      smtp: {
-        enabled: true,
-        debug: true,
-        host: '127.0.0.1',
-        tlsUnauth: true,
-        templateDir: __dirname + '/templates'
-      },
-      ses: {
-        enabled: true,
-        debug: true,
-        region: 'eu-west-1',
-        accessKeyId: 'YOUR_ACCESS_ID',
-        secretAccessKey: 'YOUR_SECRET_KEY',
-        templateDir: __dirname + '/templates'
+        mlcl_queue(molecuel);
+
+        // fake init molecuel
+        molecuel.emit('mlcl::core::init:post', molecuel);
+
+        done();
       }
-    }
+    })
 
-    mlcl_queue(molecuel);
 
-    // fake init molecuel
-    molecuel.emit('mlcl::core::init:post', molecuel);
-
-    done();
   });
 
   describe('mailer', function() {

@@ -36,6 +36,7 @@
     "mlcl_queue": "0.0.4",
     "mocha": "*",
     "should": ">= 0.0.1",
+    "simplesmtp": "^0.3.35",
     "tslint": "^3.5.0",
     "tslint-stylish": "^2.1.0-beta",
     "typescript": "^1.8.2"
