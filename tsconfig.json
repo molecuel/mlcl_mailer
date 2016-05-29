@@ -9,7 +9,7 @@
     "sourceMap": false
   },
   "files": [
-    "typings/main.d.ts",
+    "typings/index.d.ts",
     "typings_override/main.d.ts",
     "src/index.ts",
     "src/config.ts"

@@ -64,7 +64,7 @@ export class Gulpfile {
    */
   @Task('ts::compile')
   tscompile(): any {
-    let sourcepaths = ['typings/main.d.ts', 'typings_override/main.d.ts'];
+    let sourcepaths = ['typings/index.d.ts', 'typings/main.d.ts', 'typings_override/main.d.ts'];
     sourcepaths.push(this.config.paths.source);
     let tsResult = gulp.src(sourcepaths)
       .pipe(plumber())
@@ -81,7 +81,7 @@ export class Gulpfile {
    */
   @Task('ts::test::compile')
   tstestcompile(): any {
-    let sourcepaths = ['typings/main.d.ts', 'typings_override/main.d.ts'];
+    let sourcepaths = ['typings/index.d.ts', 'typings/main.d.ts', 'typings_override/main.d.ts'];
     sourcepaths.push(this.config.paths.testsource);
     let tsResult = gulp.src(sourcepaths)
       .pipe(plumber())

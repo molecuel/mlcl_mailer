@@ -44,6 +44,7 @@
   "dependencies": {
     "async": "^2.0.0-rc.3",
     "express-handlebars": "^3.0.0",
+    "moment": "^2.13.0",
     "node-uuid": "^1.4.7",
     "nodemailer": "^2.3.0",
     "nodemailer-dkim": "^1.0.4",

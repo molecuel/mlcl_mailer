@@ -5,4 +5,4 @@ config = {
   name: 'mailer'
 };
 
-module.exports = config;
+export = config;

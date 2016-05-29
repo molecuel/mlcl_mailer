@@ -8,6 +8,7 @@ import nodemailerHtmlToText = require('nodemailer-html-to-text');
 import nodemailerSesTransport = require('nodemailer-ses-transport');
 import uuid = require('node-uuid');
 import async = require('async');
+import moment = require('moment');
 
 class mlcl_mailer {
   public static loaderversion = 2;              // version number
