@@ -1,8 +1,5 @@
 'use strict';
 const nodemailer = require('nodemailer');
-const expressHandleBars = require('express-handlebars');
-const nodemailerExpressHandlebars = require('nodemailer-express-handlebars');
-const nodemailerHtmlToText = require('nodemailer-html-to-text');
 const nodemailerSesTransport = require('nodemailer-ses-transport');
 const uuid = require('node-uuid');
 const async = require('async');
@@ -14,7 +11,6 @@ class mlcl_mailer {
         this.molecuel = mlcl;
         mlcl.mailer = this;
         this.molecuel.on('mlcl::i18n::init:post', (i18nmod) => {
-            console.log('here');
             this.i18n = i18nmod;
         });
         this.stack = [];
@@ -91,24 +87,6 @@ class mlcl_mailer {
             this.config.debug = mlcl.config.smtp.debug || false;
             this.config.pool = mlcl.config.smtp.pool || false;
             this.transporter = nodemailer.createTransport(this.config);
-            if (mlcl.config.smtp.templateDir) {
-                this.viewEngine = expressHandleBars.create({
-                    helpers: {
-                        translate: function (transstring) {
-                            console.log(transstring);
-                        }
-                    }
-                });
-                this.templateEngine = nodemailerExpressHandlebars({
-                    viewEngine: this.viewEngine,
-                    viewPath: mlcl.config.smtp.templateDir,
-                    extName: '.hbs'
-                });
-                this.transporter.use('compile', this.templateEngine);
-                if (!mlcl.config.smtp.disableToText) {
-                    this.transporter.use('compile', nodemailerHtmlToText.htmlToText());
-                }
-            }
         }
         else if (mlcl && mlcl.config && mlcl.config.mail && mlcl.config.mail.enabled) {
             this.config = {};
@@ -130,26 +108,6 @@ class mlcl_mailer {
                 this.config.mail.smtp.debug = mlcl.config.mail.smtp.debug || false;
                 this.config.mail.smtp.pool = mlcl.config.mail.smtp.pool || false;
                 this.transporter = nodemailer.createTransport(this.config.mail.smtp);
-                if (mlcl.config.mail.smtp.templateDir) {
-                    this.viewEngine = expressHandleBars.create({
-                        helpers: {
-                            translate: function (transstring) {
-                                console.log(expressHandleBars);
-                                console.log(this);
-                                return 'test';
-                            }
-                        }
-                    });
-                    this.templateEngine = nodemailerExpressHandlebars({
-                        viewEngine: this.viewEngine,
-                        viewPath: mlcl.config.mail.smtp.templateDir,
-                        extName: '.hbs'
-                    });
-                    this.transporter.use('compile', this.templateEngine);
-                    if (!mlcl.config.mail.smtp.disableToText) {
-                        this.transporter.use('compile', nodemailerHtmlToText.htmlToText());
-                    }
-                }
             }
             else if (mlcl.config.mail.enabled && mlcl.config.mail.ses && mlcl.config.mail.default === 'ses') {
                 if (mlcl.config.mail.ses.tlsUnauth) {
@@ -247,7 +205,6 @@ class mlcl_mailer {
             }
             else {
                 try {
-                    console.log(data);
                     let lang = data.lang;
                     if (!data.lang) {
                         lang = 'en';

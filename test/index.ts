@@ -62,26 +62,11 @@ describe('mlcl_mailer', function() {
               prefix: 'ru'
             }
           },
+          debug: true,
           backend: {
             loadPath: __dirname + '/locales/{{lng}}/{{ns}}.json'
-          },
-          debug: false
+          }
         }
-
-        // Legacy config SMTP only
-        /*
-        molecuel.config.smtp = {
-          enabled: true,
-          debug: true,
-          host: '192.168.99.100',
-          tlsUnauth: true,
-          auth: {
-            user: 'molecuel',
-            pass: 'molecuel'
-          },
-          templateDir: __dirname + '/templates'
-        };
-        */
 
         // Migration mailer 2.x smtp, ses, ...
         molecuel.config.mail = {
@@ -92,7 +77,11 @@ describe('mlcl_mailer', function() {
             enabled: true,
             debug: true,
             host: '127.0.0.1',
-            port: 2500,
+            port: 25,
+            auth: {
+              user: 'molecuel',
+              pass: 'molecuel'
+            },
             tlsUnauth: true,
           },
           ses: {
@@ -141,7 +130,7 @@ describe('mlcl_mailer', function() {
       // setup e-mail data with unicode symbols
       var mailOptions = {
         from: 'murat.calis@inspirationlabs.com',
-        to: 'murat.calis@inspirationlabs.com',
+        to: 'dominic.boettger@inspirationlabs.com',
         subject: 'Test',
         template: 'email',
         data: {

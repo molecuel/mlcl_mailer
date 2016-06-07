@@ -53,10 +53,10 @@ describe('mlcl_mailer', function () {
                             prefix: 'ru'
                         }
                     },
+                    debug: true,
                     backend: {
                         loadPath: __dirname + '/locales/{{lng}}/{{ns}}.json'
-                    },
-                    debug: false
+                    }
                 };
                 molecuel.config.mail = {
                     enabled: true,
@@ -66,7 +66,11 @@ describe('mlcl_mailer', function () {
                         enabled: true,
                         debug: true,
                         host: '127.0.0.1',
-                        port: 2500,
+                        port: 25,
+                        auth: {
+                            user: 'molecuel',
+                            pass: 'molecuel'
+                        },
                         tlsUnauth: true,
                     },
                     ses: {
@@ -101,7 +105,7 @@ describe('mlcl_mailer', function () {
         it('should send a mail', function (done) {
             var mailOptions = {
                 from: 'murat.calis@inspirationlabs.com',
-                to: 'murat.calis@inspirationlabs.com',
+                to: 'dominic.boettger@inspirationlabs.com',
                 subject: 'Test',
                 template: 'email',
                 data: {

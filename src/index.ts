@@ -35,7 +35,6 @@ class mlcl_mailer {
     mlcl.mailer = this;
 
     this.molecuel.on('mlcl::i18n::init:post', (i18nmod) => {
-      console.log('here');
       this.i18n = i18nmod;
     });
 
@@ -141,26 +140,6 @@ class mlcl_mailer {
       this.transporter = nodemailer.createTransport(
         this.config
       );
-
-      // init view engine for html mails
-      if (mlcl.config.smtp.templateDir) {
-        this.viewEngine = expressHandleBars.create({
-          helpers: {
-            translate: function(transstring) {
-              console.log(transstring);
-            }
-          }
-        });
-        this.templateEngine = nodemailerExpressHandlebars({
-          viewEngine: this.viewEngine,
-          viewPath: mlcl.config.smtp.templateDir,
-          extName: '.hbs'
-        });
-        this.transporter.use('compile', this.templateEngine);
-        if (!mlcl.config.smtp.disableToText) {
-          this.transporter.use('compile', nodemailerHtmlToText.htmlToText());
-        }
-      }
     }
 
     // node-mailer 2.x switch smtp, ses...
@@ -191,28 +170,6 @@ class mlcl_mailer {
         this.transporter = nodemailer.createTransport(
           this.config.mail.smtp
         );
-
-        // init view engine for html mails
-        if (mlcl.config.mail.smtp.templateDir) {
-          this.viewEngine = expressHandleBars.create({
-            helpers: {
-              translate: function(transstring) {
-                console.log(expressHandleBars);
-                console.log(this);
-                return 'test';
-              }
-            }
-          });
-          this.templateEngine = nodemailerExpressHandlebars({
-            viewEngine: this.viewEngine,
-            viewPath: mlcl.config.mail.smtp.templateDir,
-            extName: '.hbs'
-          });
-          this.transporter.use('compile', this.templateEngine);
-          if (!mlcl.config.mail.smtp.disableToText) {
-            this.transporter.use('compile', nodemailerHtmlToText.htmlToText());
-          }
-        }
       }
       // Amazon SES
       else if (mlcl.config.mail.enabled && mlcl.config.mail.ses && mlcl.config.mail.default === 'ses') {
@@ -371,7 +328,6 @@ class mlcl_mailer {
         callback(err);
       } else {
         try {
-          console.log(data);
           let lang = data.lang;
           if (!data.lang) {
             lang = 'en';
