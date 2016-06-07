@@ -6,7 +6,7 @@
   "globalDevDependencies": {
     "Q": "github:DefinitelyTyped/DefinitelyTyped/q/Q.d.ts#4de74cb527395c13ba20b438c3a7a419ad931f1c",
     "amqplib": "registry:dt/amqplib#0.3.0+20160317120654",
-    "async": "registry:dt/async#1.4.2+20160501155344",
+    "async": "registry:dt/async#1.4.2+20160602152629",
     "del": "github:DefinitelyTyped/DefinitelyTyped/del/del.d.ts#9027703c0bd831319dcdf7f3169f7a468537f448",
     "express-handlebars": "registry:dt/express-handlebars#0.0.0+20160316155526",
     "glob": "github:DefinitelyTyped/DefinitelyTyped/glob/glob.d.ts#a14d724826174d1669d4df04c80f4838b7e71fdf",

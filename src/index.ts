@@ -8,7 +8,9 @@ import nodemailerHtmlToText = require('nodemailer-html-to-text');
 import nodemailerSesTransport = require('nodemailer-ses-transport');
 import uuid = require('node-uuid');
 import async = require('async');
-import moment = require('moment');
+import fs = require('fs');
+import htmlToText = require('html-to-text');
+import handlebars = require('handlebars');
 
 class mlcl_mailer {
   public static loaderversion = 2;              // version number
@@ -19,6 +21,7 @@ class mlcl_mailer {
   protected molecuel: any;                      // save a copy of parent molecuel
   protected queue: any;                         // rabbit queue
   private stack: Array<Function>;               // custom functions to use as processor in response handling
+  public i18n: any;
 
   /**
    * mlcl_mailer constructor listens to queue and process jobs
@@ -30,6 +33,11 @@ class mlcl_mailer {
     this.molecuel = mlcl;
 
     mlcl.mailer = this;
+
+    this.molecuel.on('mlcl::i18n::init:post', (i18nmod) => {
+      console.log('here');
+      this.i18n = i18nmod;
+    });
 
     // API custom functions to handle response queue messages
     this.stack = [];
@@ -136,7 +144,13 @@ class mlcl_mailer {
 
       // init view engine for html mails
       if (mlcl.config.smtp.templateDir) {
-        this.viewEngine = expressHandleBars.create({});
+        this.viewEngine = expressHandleBars.create({
+          helpers: {
+            translate: function(transstring) {
+              console.log(transstring);
+            }
+          }
+        });
         this.templateEngine = nodemailerExpressHandlebars({
           viewEngine: this.viewEngine,
           viewPath: mlcl.config.smtp.templateDir,
@@ -180,7 +194,15 @@ class mlcl_mailer {
 
         // init view engine for html mails
         if (mlcl.config.mail.smtp.templateDir) {
-          this.viewEngine = expressHandleBars.create({});
+          this.viewEngine = expressHandleBars.create({
+            helpers: {
+              translate: function(transstring) {
+                console.log(expressHandleBars);
+                console.log(this);
+                return 'test';
+              }
+            }
+          });
           this.templateEngine = nodemailerExpressHandlebars({
             viewEngine: this.viewEngine,
             viewPath: mlcl.config.mail.smtp.templateDir,
@@ -211,18 +233,25 @@ class mlcl_mailer {
         );
 
         // init view engine for html mails
-        if (mlcl.config.mail.ses.templateDir) {
-          this.viewEngine = expressHandleBars.create({});
-          this.templateEngine = nodemailerExpressHandlebars({
-            viewEngine: this.viewEngine,
-            viewPath: mlcl.config.mail.ses.templateDir,
-            extName: '.hbs'
-          });
-          this.transporter.use('compile', this.templateEngine);
-          if (!mlcl.config.mail.ses.disableToText) {
-            this.transporter.use('compile', nodemailerHtmlToText.htmlToText());
-          }
-        }
+        /*        if (mlcl.config.mail.ses.templateDir) {
+                  this.viewEngine = expressHandleBars.create({
+                    helpers: {
+                      translate: function(transstring) {
+                        console.log(transstring);
+                        return 'test';
+                      }
+                    }
+                  });
+                  this.templateEngine = nodemailerExpressHandlebars({
+                    viewEngine: this.viewEngine,
+                    viewPath: mlcl.config.mail.ses.templateDir,
+                    extName: '.hbs'
+                  });
+                  this.transporter.use('compile', this.templateEngine);
+                  if (!mlcl.config.mail.ses.disableToText) {
+                    this.transporter.use('compile', nodemailerHtmlToText.htmlToText());
+                  }
+                }*/
       }
     }
   }
@@ -270,25 +299,37 @@ class mlcl_mailer {
    * @return void
    */
   public sendMail(mailoptions: any, callback?: Function): void {
-    // send mail with defined transport  object
-    this.transporter.sendMail(mailoptions, (error, info) => {
-      if (error) {
-        let messageid = null;
-        if (info && info.messageId) {
-          messageid = info.messageId;
+    this.renderTemplate(mailoptions.template, mailoptions.data, (err, templatedata) => {
+      if (!err) {
+        if (templatedata.text) {
+          mailoptions.text = templatedata.text;
         }
-        this.molecuel.log.error('mailer', 'Error while delivering mail',
-          { messageId: messageid, error: error });
-        this.molecuel.emit('mlcl::mailer::message:error', this, mailoptions, error);
+        if (templatedata.html) {
+          mailoptions.html = templatedata.html;
+        }
+        // send mail with defined transport  object
+        this.transporter.sendMail(mailoptions, (error, info) => {
+          if (error) {
+            let messageid = null;
+            if (info && info.messageId) {
+              messageid = info.messageId;
+            }
+            this.molecuel.log.error('mailer', 'Error while delivering mail',
+              { messageId: messageid, error: error });
+            this.molecuel.emit('mlcl::mailer::message:error', this, mailoptions, error);
+          } else {
+            this.molecuel.log.info('mailer', 'Mail queued',
+              { messageId: info.messageId });
+            this.molecuel.emit('mlcl::mailer::message:success', this, mailoptions, info);
+          }
+          if (callback) {
+            callback(error, info, mailoptions);
+          }
+        });
       } else {
-        this.molecuel.log.info('mailer', 'Mail queued',
-          { messageId: info.messageId });
-        this.molecuel.emit('mlcl::mailer::message:success', this, mailoptions, info);
+        this.molecuel.log.error('mailer', 'Error while rendering template', err);
       }
-      if (callback) {
-        callback(error, info, mailoptions);
-      }
-    });
+    })
   }
 
   /**
@@ -300,6 +341,57 @@ class mlcl_mailer {
    */
   public registerHandler(handlerfunc: Function): void {
     this.stack.push(handlerfunc);
+  }
+
+
+  public renderTemplate(templatename, data, callback) {
+    this.renderHtml(templatename, data, (err, html) => {
+      if (err) {
+        callback(err);
+      } else {
+        let templates: any = {};
+        templates.html = html;
+        templates.text = this.toText(html);
+        callback(null, templates)
+      }
+    })
+  }
+
+  /**
+   * [renderTemplate description]
+   * @param  {[type]} templatename [description]
+   * @param  {[type]} data         [description]
+   * @return {String}              [description]
+   */
+  public renderHtml(templatename, data, callback): void {
+    let templateDir = this.molecuel.config.mail.templateDir;
+    let handlebarsinstance = handlebars.create();
+    fs.readFile(templateDir + '/' + templatename + '.hbs', 'utf8', (err, templatestr) => {
+      if (err) {
+        callback(err);
+      } else {
+        try {
+          console.log(data);
+          let lang = data.lang;
+          if (!data.lang) {
+            lang = 'en';
+          }
+          let i18n = this.i18n.getLocalizationInstanceForLanguage(lang);
+          handlebarsinstance.registerHelper('translate', function(translatestring) {
+            return i18n.i18next.t(translatestring);
+          })
+          let compiled = handlebarsinstance.compile(templatestr);
+          let htmlstring = compiled(data);
+          callback(null, htmlstring)
+        } catch (e) {
+          callback(e);
+        }
+      }
+    })
+  }
+
+  public toText(htmlString) {
+    return htmlToText.fromString(htmlString);
   }
 
   /**

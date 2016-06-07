@@ -33,6 +33,7 @@
     "gulp-util": "^3.0.7",
     "gulpclass": "0.0.8",
     "merge2": "^1.0.1",
+    "mlcl_i18n": "^0.3.0",
     "mlcl_queue": "0.0.4",
     "mocha": "*",
     "should": ">= 0.0.1",
@@ -44,7 +45,7 @@
   "dependencies": {
     "async": "^2.0.0-rc.3",
     "express-handlebars": "^3.0.0",
-    "moment": "^2.13.0",
+    "html-to-text": "^2.1.0",
     "node-uuid": "^1.4.7",
     "nodemailer": "^2.3.0",
     "nodemailer-dkim": "^1.0.4",

@@ -3,6 +3,7 @@ import should = require('should');
 import assert = require('assert');
 import event = require('events');
 const mlcl_queue = require('mlcl_queue');
+const mlcl_i18n = require('mlcl_i18n');
 const mlcl_mailer = require('../dist/');
 const simplesmtp = require('simplesmtp');
 
@@ -18,11 +19,12 @@ describe('mlcl_mailer', function() {
   let molecuel;
   let uuid1;
   let uuid2;
+  let i18n;
 
   before(function(done) {
     let server = simplesmtp.createServer();
     server.listen(2500, (err) => {
-      if(err) {
+      if (err) {
         should.not.exist(err);
       } else {
         molecuel = new _mlcl();
@@ -47,6 +49,25 @@ describe('mlcl_mailer', function() {
           };
         }
 
+        molecuel.config.i18n = {
+          detectLngFromPath: true,
+          languages: {
+            en: {
+              name: 'English',
+              prefix: null,
+              default: true
+            },
+            ru: {
+              name: 'Russian',
+              prefix: 'ru'
+            }
+          },
+          backend: {
+            loadPath: __dirname + '/locales/{{lng}}/{{ns}}.json'
+          },
+          debug: false
+        }
+
         // Legacy config SMTP only
         /*
         molecuel.config.smtp = {
@@ -66,29 +87,30 @@ describe('mlcl_mailer', function() {
         molecuel.config.mail = {
           enabled: true,
           default: 'smtp',
+          templateDir: __dirname + '/templates',
           smtp: {
             enabled: true,
             debug: true,
             host: '127.0.0.1',
             port: 2500,
             tlsUnauth: true,
-            templateDir: __dirname + '/templates'
           },
           ses: {
             enabled: true,
             debug: true,
             region: 'eu-west-1',
             accessKeyId: 'YOUR_ACCESS_ID',
-            secretAccessKey: 'YOUR_SECRET_KEY',
-            templateDir: __dirname + '/templates'
+            secretAccessKey: 'YOUR_SECRET_KEY'
           }
         }
 
+        new mlcl_mailer(molecuel, {});
+
         mlcl_queue(molecuel);
+        mlcl_i18n(molecuel);
 
         // fake init molecuel
         molecuel.emit('mlcl::core::init:post', molecuel);
-
         done();
       }
     })
@@ -98,7 +120,6 @@ describe('mlcl_mailer', function() {
 
   describe('mailer', function() {
     it('should initialize', function(done) {
-      new mlcl_mailer(molecuel, {});
 
       let register1 = function(obj) {
       };
@@ -123,7 +144,7 @@ describe('mlcl_mailer', function() {
         to: 'murat.calis@inspirationlabs.com',
         subject: 'Test',
         template: 'email',
-        context: {
+        data: {
           name: 'Myname'
         }
       }
@@ -144,9 +165,7 @@ describe('mlcl_mailer', function() {
       };
 
       molecuel.on('mlcl::mailer::message:error', failcb);
-
       molecuel.mailer.sendMail(mailOptions);
-
     });
 
     it('should send a mail end return via callback', function(done) {
@@ -156,7 +175,7 @@ describe('mlcl_mailer', function() {
         to: 'murat.calis@inspirationlabs.com',
         subject: 'Test',
         template: 'email',
-        context: {
+        data: {
           name: 'Myname'
         }
       }
