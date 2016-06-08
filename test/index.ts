@@ -129,7 +129,7 @@ describe('mlcl_mailer', function() {
     it('should send a mail', function(done) {
       // setup e-mail data with unicode symbols
       var mailOptions = {
-        from: 'murat.calis@inspirationlabs.com',
+        from: 'dominic.boettger@inspirationlabs.com',
         to: 'dominic.boettger@inspirationlabs.com',
         subject: 'Test',
         template: 'email',
@@ -160,8 +160,8 @@ describe('mlcl_mailer', function() {
     it('should send a mail end return via callback', function(done) {
       // setup e-mail data with unicode symbols
       var mailOptions = {
-        from: 'murat.calis@inspirationlabs.com',
-        to: 'murat.calis@inspirationlabs.com',
+        from: 'dominic.boettger@inspirationlabs.com',
+        to: 'dominic.boettger@inspirationlabs.com',
         subject: 'Test',
         template: 'email',
         data: {
@@ -177,9 +177,9 @@ describe('mlcl_mailer', function() {
     it('should send to queue', function(done) {
       // setup Qdata with E-Mail options
       let qoptions = {
-        from: 'murat.calis@inspirationlabs.com',
-        to: 'murat.calis@inspirationlabs.com',
-        cc: 'murat.calis@inspirationlabs.com',
+        from: 'dominic.boettger@inspirationlabs.com',
+        to: 'dominic.boettger@inspirationlabs.com',
+        cc: 'dominic.boettger@inspirationlabs.com',
         subject: 'Subject',
         template: 'email',
         data: {
@@ -204,9 +204,9 @@ describe('mlcl_mailer', function() {
     it('should send second mail to queue', function(done) {
       // setup Qdata with E-Mail options
       let qoptions = {
-        from: 'murat.calis@inspirationlabs.com',
-        to: 'murat.calis@inspirationlabs.com',
-        cc: 'murat.calis@inspirationlabs.com',
+        from: 'dominic.boettger@inspirationlabs.com',
+        to: 'dominic.boettger@inspirationlabs.com',
+        cc: 'dominic.boettger@inspirationlabs.com',
         subject: 'Subject',
         template: 'email',
         data: {
