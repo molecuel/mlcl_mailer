@@ -58,7 +58,7 @@ describe('mlcl_mailer', function () {
                         loadPath: __dirname + '/locales/{{lng}}/{{ns}}.json'
                     }
                 };
-                molecuel.config.mail1 = {
+                molecuel.config.mail = {
                     enabled: true,
                     default: 'smtp',
                     templateDir: __dirname + '/templates',

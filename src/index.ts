@@ -111,13 +111,15 @@ class mlcl_mailer {
         });
       }
     });
-
     // node-mailer migration 2.x backward compatibility if smtp is configured in legacy mode
     // Legacy object is mlcl.config.smtp, new object is mlcl.config.mail.smtp
     if (mlcl && mlcl.config && mlcl.config.smtp && mlcl.config.smtp.enabled) {
       let config: any = {};
       config.smtp = mlcl.config.smtp;
       this.checkSmtpConfig(config);
+      if (mlcl.config.smtp.templateDir) {
+        this.config.templateDir = mlcl.config.smtp.templateDir;
+      }
       this.transporter = nodemailer.createTransport(this.config);
     }
     // node-mailer 2.x switch smtp, ses...
@@ -125,6 +127,9 @@ class mlcl_mailer {
       // SMTP
       if (mlcl.config.mail.enabled && mlcl.config.mail.smtp && mlcl.config.mail.default === 'smtp') {
         this.checkSmtpConfig(mlcl.config.mail);
+        if (mlcl.config.mail.templateDir) {
+          this.config.templateDir = mlcl.config.mail.templateDir;
+        }
         this.transporter = nodemailer.createTransport(this.config.smtp);
       }
       // Amazon SES
@@ -184,7 +189,6 @@ class mlcl_mailer {
   }
 
   public checkSmtpConfig(config: any) {
-
     if (config && config.smtp && config.smtp.tlsUnauth) {
       process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
     }
@@ -288,7 +292,7 @@ class mlcl_mailer {
    * @return {String}              [description]
    */
   public renderHtml(templatename, data, callback): void {
-    let templateDir = this.molecuel.config.mail.templateDir;
+    let templateDir = this.config.templateDir;
     let handlebarsinstance = handlebars.create();
     fs.readFile(templateDir + '/' + templatename + '.hbs', 'utf8', (err, templatestr) => {
       if (err) {

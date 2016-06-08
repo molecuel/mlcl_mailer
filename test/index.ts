@@ -69,7 +69,7 @@ describe('mlcl_mailer', function() {
         }
 
         // Migration mailer 2.x smtp, ses, ...
-        molecuel.config.mail1= {
+        molecuel.config.mail = {
           enabled: true,
           default: 'smtp',
           templateDir: __dirname + '/templates',
