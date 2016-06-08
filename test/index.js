@@ -66,7 +66,7 @@ describe('mlcl_mailer', function () {
                         enabled: true,
                         debug: true,
                         host: '127.0.0.1',
-                        port: 25,
+                        port: 2500,
                         auth: {
                             user: 'molecuel',
                             pass: 'molecuel'
