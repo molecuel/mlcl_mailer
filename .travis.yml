@@ -4,8 +4,6 @@ services:
 node_js:
   - "4"
 sudo: false
-before_install:
-  - apt-get install -y postfix
 before_script:
   - service postfix stop
   - smtp-sink -d "%d.%H.%M.%S" localhost:2500 1000 &
