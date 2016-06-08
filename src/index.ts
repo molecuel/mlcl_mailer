@@ -151,6 +151,7 @@ class mlcl_mailer {
         );
       }
     }
+    this.molecuel.emit('mlcl::mailer::init:post', this);
   }
 
   /**
