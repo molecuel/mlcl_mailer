@@ -111,6 +111,7 @@ class mlcl_mailer {
         });
       }
     });
+
     // node-mailer migration 2.x backward compatibility if smtp is configured in legacy mode
     // Legacy object is mlcl.config.smtp, new object is mlcl.config.mail.smtp
     if (mlcl && mlcl.config && mlcl.config.smtp && mlcl.config.smtp.enabled) {
@@ -134,20 +135,26 @@ class mlcl_mailer {
       }
       // Amazon SES
       else if (mlcl.config.mail.enabled && mlcl.config.mail.ses && mlcl.config.mail.default === 'ses') {
-
         if (mlcl.config.mail.ses.tlsUnauth) {
           process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
         }
-        this.config.mail.ses = {};
-
-        this.config.mail.ses.accessKeyId = mlcl.config.mail.ses.accessKeyId;
-        this.config.mail.ses.secretAccessKey = mlcl.config.mail.ses.secretAccessKey;
-        this.config.mail.ses.rateLimit = mlcl.config.mail.ses.rateLimit || 5;
-        this.config.mail.ses.region = mlcl.config.mail.ses.region || 'eu-west-1';
+        if (!this.config) {
+          this.config = {
+            ses: {}
+          };
+        }
+        this.config.ses = {};
+        if (mlcl.config.mail.templateDir) {
+          this.config.templateDir = mlcl.config.mail.templateDir;
+        }
+        this.config.ses.accessKeyId = mlcl.config.mail.ses.accessKeyId;
+        this.config.ses.secretAccessKey = mlcl.config.mail.ses.secretAccessKey;
+        this.config.ses.rateLimit = mlcl.config.mail.ses.rateLimit || 5;
+        this.config.ses.region = mlcl.config.mail.ses.region || 'eu-west-1';
 
         // SESTransporter
         this.transporter = nodemailer.createTransport(
-          nodemailerSesTransport(this.config.mail.ses)
+          nodemailerSesTransport(this.config.ses)
         );
       }
     }

@@ -91,14 +91,23 @@ class mlcl_mailer {
                 if (mlcl.config.mail.ses.tlsUnauth) {
                     process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
                 }
-                this.config.mail.ses = {};
-                this.config.mail.ses.accessKeyId = mlcl.config.mail.ses.accessKeyId;
-                this.config.mail.ses.secretAccessKey = mlcl.config.mail.ses.secretAccessKey;
-                this.config.mail.ses.rateLimit = mlcl.config.mail.ses.rateLimit || 5;
-                this.config.mail.ses.region = mlcl.config.mail.ses.region || 'eu-west-1';
-                this.transporter = nodemailer.createTransport(nodemailerSesTransport(this.config.mail.ses));
+                if (!this.config) {
+                    this.config = {
+                        ses: {}
+                    };
+                }
+                this.config.ses = {};
+                if (mlcl.config.mail.templateDir) {
+                    this.config.templateDir = mlcl.config.mail.templateDir;
+                }
+                this.config.ses.accessKeyId = mlcl.config.mail.ses.accessKeyId;
+                this.config.ses.secretAccessKey = mlcl.config.mail.ses.secretAccessKey;
+                this.config.ses.rateLimit = mlcl.config.mail.ses.rateLimit || 5;
+                this.config.ses.region = mlcl.config.mail.ses.region || 'eu-west-1';
+                this.transporter = nodemailer.createTransport(nodemailerSesTransport(this.config.ses));
             }
         }
+        this.molecuel.emit('mlcl::mailer::init:post', this);
     }
     sendToQueue(qobject, callback) {
         if (qobject.from && qobject.to && qobject.subject && qobject.template) {

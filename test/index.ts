@@ -88,7 +88,7 @@ describe('mlcl_mailer', function() {
             enabled: true,
             debug: true,
             region: 'eu-west-1',
-            accessKeyId: 'YOUR_ACCESS_ID',
+            accessKeyId: 'YOUR_ACCESS_KEY',
             secretAccessKey: 'YOUR_SECRET_KEY'
           }
         }
