@@ -2,9 +2,6 @@
 import nodemailer = require('nodemailer');
 // import fs = require('fs');
 // import dkim = require('nodemailer-dkim');
-import expressHandleBars = require('express-handlebars');
-import nodemailerExpressHandlebars = require('nodemailer-express-handlebars');
-import nodemailerHtmlToText = require('nodemailer-html-to-text');
 import nodemailerSesTransport = require('nodemailer-ses-transport');
 import uuid = require('node-uuid');
 import async = require('async');
@@ -115,61 +112,20 @@ class mlcl_mailer {
       }
     });
 
-
     // node-mailer migration 2.x backward compatibility if smtp is configured in legacy mode
     // Legacy object is mlcl.config.smtp, new object is mlcl.config.mail.smtp
     if (mlcl && mlcl.config && mlcl.config.smtp && mlcl.config.smtp.enabled) {
-
-      if (mlcl.config.smtp.tlsUnauth) {
-        process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
-      }
-      this.config = {};
-
-      this.config.host = mlcl.config.smtp.host || 'localhost';
-      this.config.port = mlcl.config.smtp.port || 25;
-      if (mlcl.config.smtp.auth) {
-        this.config.auth = mlcl.config.smtp.auth;
-      }
-      this.config.maxConnections = mlcl.config.smtp.maxConnection || 5;
-      this.config.maxMessages = mlcl.config.smtp.maxMessages || 100;
-      this.config.rateLimit = mlcl.config.smtp.rateLimit || false;
-      this.config.secure = mlcl.config.smtp.secure || false;
-      this.config.debug = mlcl.config.smtp.debug || false;
-      this.config.pool = mlcl.config.smtp.pool || false;
-
-      this.transporter = nodemailer.createTransport(
-        this.config
-      );
+      let config: any = {};
+      config.smtp = mlcl.config.smtp;
+      this.checkSmtpConfig(config);
+      this.transporter = nodemailer.createTransport(this.config);
     }
-
     // node-mailer 2.x switch smtp, ses...
     else if (mlcl && mlcl.config && mlcl.config.mail && mlcl.config.mail.enabled) {
-      this.config = {};
-      this.config.mail = {};
-
       // SMTP
       if (mlcl.config.mail.enabled && mlcl.config.mail.smtp && mlcl.config.mail.default === 'smtp') {
-
-        if (mlcl.config.mail.smtp.tlsUnauth) {
-          process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
-        }
-        this.config.mail.smtp = {};
-
-        this.config.mail.smtp.host = mlcl.config.mail.smtp.host || 'localhost';
-        this.config.mail.smtp.port = mlcl.config.mail.smtp.port || 25;
-        if (mlcl.config.mail.smtp.auth) {
-          this.config.mail.smtp.auth = mlcl.config.mail.smtp.auth;
-        }
-        this.config.mail.smtp.maxConnections = mlcl.config.mail.smtp.maxConnection || 5;
-        this.config.mail.smtp.maxMessages = mlcl.config.mail.smtp.maxMessages || 100;
-        this.config.mail.smtp.rateLimit = mlcl.config.mail.smtp.rateLimit || false;
-        this.config.mail.smtp.secure = mlcl.config.mail.smtp.secure || false;
-        this.config.mail.smtp.debug = mlcl.config.mail.smtp.debug || false;
-        this.config.mail.smtp.pool = mlcl.config.mail.smtp.pool || false;
-
-        this.transporter = nodemailer.createTransport(
-          this.config.mail.smtp
-        );
+        this.checkSmtpConfig(mlcl.config.mail);
+        this.transporter = nodemailer.createTransport(this.config.smtp);
       }
       // Amazon SES
       else if (mlcl.config.mail.enabled && mlcl.config.mail.ses && mlcl.config.mail.default === 'ses') {
@@ -188,27 +144,6 @@ class mlcl_mailer {
         this.transporter = nodemailer.createTransport(
           nodemailerSesTransport(this.config.mail.ses)
         );
-
-        // init view engine for html mails
-        /*        if (mlcl.config.mail.ses.templateDir) {
-                  this.viewEngine = expressHandleBars.create({
-                    helpers: {
-                      translate: function(transstring) {
-                        console.log(transstring);
-                        return 'test';
-                      }
-                    }
-                  });
-                  this.templateEngine = nodemailerExpressHandlebars({
-                    viewEngine: this.viewEngine,
-                    viewPath: mlcl.config.mail.ses.templateDir,
-                    extName: '.hbs'
-                  });
-                  this.transporter.use('compile', this.templateEngine);
-                  if (!mlcl.config.mail.ses.disableToText) {
-                    this.transporter.use('compile', nodemailerHtmlToText.htmlToText());
-                  }
-                }*/
       }
     }
   }
@@ -236,7 +171,6 @@ class mlcl_mailer {
         }
       })
         .then(null, (error) => {
-          console.log('error in sendToQueue');
           if (error) {
             this.molecuel.log.error('mailer', 'sendToQueue :: error while sending to queue', error);
           }
@@ -249,6 +183,35 @@ class mlcl_mailer {
     }
   }
 
+  public checkSmtpConfig(config: any) {
+
+    if (config && config.smtp && config.smtp.tlsUnauth) {
+      process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
+    }
+
+    if (!this.config) {
+      this.config = {
+        smtp: {}
+      };
+    }
+
+    let smtp: any = {};
+
+    smtp.host = config.smtp.host || 'localhost';
+    smtp.port = config.smtp.port || 25;
+    if (config.smtp.auth) {
+      smtp.auth = config.smtp.auth;
+    }
+    smtp.maxConnections = config.smtp.maxConnection || 5;
+    smtp.maxMessages = config.smtp.maxMessages || 100;
+    smtp.rateLimit = config.smtp.rateLimit || false;
+    smtp.secure = config.smtp.secure || false;
+    smtp.debug = config.smtp.debug || false;
+    smtp.pool = config.smtp.pool || false;
+
+    this.config.smtp = smtp;
+  }
+
   /**
    * sendMail with nodemailer as SMTP or SES
    * @param mailoptions any
@@ -256,7 +219,11 @@ class mlcl_mailer {
    * @return void
    */
   public sendMail(mailoptions: any, callback?: Function): void {
-    this.renderTemplate(mailoptions.template, mailoptions.data, (err, templatedata) => {
+    let data = mailoptions.context;
+    if (mailoptions.data) {
+      data = mailoptions.data;
+    }
+    this.renderTemplate(mailoptions.template, data, (err, templatedata) => {
       if (!err) {
         if (templatedata.text) {
           mailoptions.text = templatedata.text;
@@ -286,7 +253,7 @@ class mlcl_mailer {
       } else {
         this.molecuel.log.error('mailer', 'Error while rendering template', err);
       }
-    })
+    });
   }
 
   /**
@@ -309,9 +276,9 @@ class mlcl_mailer {
         let templates: any = {};
         templates.html = html;
         templates.text = this.toText(html);
-        callback(null, templates)
+        callback(null, templates);
       }
-    })
+    });
   }
 
   /**
@@ -335,15 +302,15 @@ class mlcl_mailer {
           let i18n = this.i18n.getLocalizationInstanceForLanguage(lang);
           handlebarsinstance.registerHelper('translate', function(translatestring) {
             return i18n.i18next.t(translatestring);
-          })
+          });
           let compiled = handlebarsinstance.compile(templatestr);
           let htmlstring = compiled(data);
-          callback(null, htmlstring)
+          callback(null, htmlstring);
         } catch (e) {
           callback(e);
         }
       }
-    })
+    });
   }
 
   public toText(htmlString) {
@@ -356,7 +323,7 @@ class mlcl_mailer {
    * @param responseobject original queue message to ack/nack
    * @return -
    */
-  private *execHandler(channel, responseobject) {
+  private * execHandler(channel, responseobject) {
     try {
       for (let i in this.stack) {
         yield this.stack[i](responseobject);

@@ -62,7 +62,7 @@ describe('mlcl_mailer', function() {
               prefix: 'ru'
             }
           },
-          debug: true,
+          debug: false,
           backend: {
             loadPath: __dirname + '/locales/{{lng}}/{{ns}}.json'
           }

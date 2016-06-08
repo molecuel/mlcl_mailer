@@ -71,43 +71,15 @@ class mlcl_mailer {
             }
         });
         if (mlcl && mlcl.config && mlcl.config.smtp && mlcl.config.smtp.enabled) {
-            if (mlcl.config.smtp.tlsUnauth) {
-                process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
-            }
-            this.config = {};
-            this.config.host = mlcl.config.smtp.host || 'localhost';
-            this.config.port = mlcl.config.smtp.port || 25;
-            if (mlcl.config.smtp.auth) {
-                this.config.auth = mlcl.config.smtp.auth;
-            }
-            this.config.maxConnections = mlcl.config.smtp.maxConnection || 5;
-            this.config.maxMessages = mlcl.config.smtp.maxMessages || 100;
-            this.config.rateLimit = mlcl.config.smtp.rateLimit || false;
-            this.config.secure = mlcl.config.smtp.secure || false;
-            this.config.debug = mlcl.config.smtp.debug || false;
-            this.config.pool = mlcl.config.smtp.pool || false;
+            let config = {};
+            config.smtp = mlcl.config.smtp;
+            this.checkSmtpConfig(config);
             this.transporter = nodemailer.createTransport(this.config);
         }
         else if (mlcl && mlcl.config && mlcl.config.mail && mlcl.config.mail.enabled) {
-            this.config = {};
-            this.config.mail = {};
             if (mlcl.config.mail.enabled && mlcl.config.mail.smtp && mlcl.config.mail.default === 'smtp') {
-                if (mlcl.config.mail.smtp.tlsUnauth) {
-                    process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
-                }
-                this.config.mail.smtp = {};
-                this.config.mail.smtp.host = mlcl.config.mail.smtp.host || 'localhost';
-                this.config.mail.smtp.port = mlcl.config.mail.smtp.port || 25;
-                if (mlcl.config.mail.smtp.auth) {
-                    this.config.mail.smtp.auth = mlcl.config.mail.smtp.auth;
-                }
-                this.config.mail.smtp.maxConnections = mlcl.config.mail.smtp.maxConnection || 5;
-                this.config.mail.smtp.maxMessages = mlcl.config.mail.smtp.maxMessages || 100;
-                this.config.mail.smtp.rateLimit = mlcl.config.mail.smtp.rateLimit || false;
-                this.config.mail.smtp.secure = mlcl.config.mail.smtp.secure || false;
-                this.config.mail.smtp.debug = mlcl.config.mail.smtp.debug || false;
-                this.config.mail.smtp.pool = mlcl.config.mail.smtp.pool || false;
-                this.transporter = nodemailer.createTransport(this.config.mail.smtp);
+                this.checkSmtpConfig(mlcl.config.mail);
+                this.transporter = nodemailer.createTransport(this.config.smtp);
             }
             else if (mlcl.config.mail.enabled && mlcl.config.mail.ses && mlcl.config.mail.default === 'ses') {
                 if (mlcl.config.mail.ses.tlsUnauth) {
@@ -135,7 +107,6 @@ class mlcl_mailer {
                 }
             })
                 .then(null, (error) => {
-                console.log('error in sendToQueue');
                 if (error) {
                     this.molecuel.log.error('mailer', 'sendToQueue :: error while sending to queue', error);
                 }
@@ -148,8 +119,35 @@ class mlcl_mailer {
             this.molecuel.log.warn('mailer', 'sendToQueue :: missing mandatory fields', qobject);
         }
     }
+    checkSmtpConfig(config) {
+        if (config && config.smtp && config.smtp.tlsUnauth) {
+            process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
+        }
+        if (!this.config) {
+            this.config = {
+                smtp: {}
+            };
+        }
+        let smtp = {};
+        smtp.host = config.smtp.host || 'localhost';
+        smtp.port = config.smtp.port || 25;
+        if (config.smtp.auth) {
+            smtp.auth = config.smtp.auth;
+        }
+        smtp.maxConnections = config.smtp.maxConnection || 5;
+        smtp.maxMessages = config.smtp.maxMessages || 100;
+        smtp.rateLimit = config.smtp.rateLimit || false;
+        smtp.secure = config.smtp.secure || false;
+        smtp.debug = config.smtp.debug || false;
+        smtp.pool = config.smtp.pool || false;
+        this.config.smtp = smtp;
+    }
     sendMail(mailoptions, callback) {
-        this.renderTemplate(mailoptions.template, mailoptions.data, (err, templatedata) => {
+        let data = mailoptions.context;
+        if (mailoptions.data) {
+            data = mailoptions.data;
+        }
+        this.renderTemplate(mailoptions.template, data, (err, templatedata) => {
             if (!err) {
                 if (templatedata.text) {
                     mailoptions.text = templatedata.text;

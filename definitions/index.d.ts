@@ -11,11 +11,12 @@ declare class mlcl_mailer {
     i18n: any;
     constructor(mlcl: any, config: any);
     sendToQueue(qobject: any, callback?: Function): void;
+    checkSmtpConfig(config: any): void;
     sendMail(mailoptions: any, callback?: Function): void;
     registerHandler(handlerfunc: Function): void;
     renderTemplate(templatename: any, data: any, callback: any): void;
     renderHtml(templatename: any, data: any, callback: any): void;
-    toText(htmlString: any): any;
+    toText(htmlString: any): string;
     private execHandler(channel, responseobject);
 }
 export = mlcl_mailer;
