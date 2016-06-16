@@ -121,7 +121,7 @@ class mlcl_mailer {
       if (mlcl.config.smtp.templateDir) {
         this.config.templateDir = mlcl.config.smtp.templateDir;
       }
-      this.transporter = nodemailer.createTransport(this.config);
+      this.transporter = nodemailer.createTransport(this.config.smtp);
     }
     // node-mailer 2.x switch smtp, ses...
     else if (mlcl && mlcl.config && mlcl.config.mail && mlcl.config.mail.enabled) {
