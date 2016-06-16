@@ -222,10 +222,12 @@ class mlcl_mailer {
                     if (!data.lang) {
                         lang = 'en';
                     }
-                    let i18n = this.i18n.getLocalizationInstanceForLanguage(lang);
-                    handlebarsinstance.registerHelper('translate', function (translatestring) {
-                        return i18n.i18next.t(translatestring);
-                    });
+                    if (this.i18n) {
+                        let i18n = this.i18n.getLocalizationInstanceForLanguage(lang);
+                        handlebarsinstance.registerHelper('translate', function (translatestring) {
+                            return i18n.i18next.t(translatestring);
+                        });
+                    }
                     let compiled = handlebarsinstance.compile(templatestr);
                     let htmlstring = compiled(data);
                     callback(null, htmlstring);
