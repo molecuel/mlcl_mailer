@@ -313,8 +313,10 @@ class mlcl_mailer {
           }
           if (this.i18n) {
             let i18n = this.i18n.getLocalizationInstanceForLanguage(lang);
+            let translate = i18n.i18next.getFixedT(lang);
             handlebarsinstance.registerHelper('translate', function(translatestring) {
-              return i18n.i18next.t(translatestring);
+              let translation = translate(translatestring);
+              return translation;
             });
           }
           let compiled = handlebarsinstance.compile(templatestr);
