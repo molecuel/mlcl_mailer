@@ -226,7 +226,7 @@ class mlcl_mailer {
                         let i18n = this.i18n.getLocalizationInstanceForLanguage(lang);
                         let translate = i18n.i18next.getFixedT(lang);
                         handlebarsinstance.registerHelper('translate', function (translatestring) {
-                            let translation = translate(translatestring);
+                            let translation = translate(translatestring, data);
                             return translation;
                         });
                     }
