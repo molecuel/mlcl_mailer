@@ -13,7 +13,7 @@ declare class mlcl_mailer {
     sendToQueue(qobject: any, callback?: Function): void;
     checkSmtpConfig(config: any): void;
     sendMail(mailoptions: any, callback?: Function): void;
-    registerHandler(handlerfunc: Function): void;
+    registerHandler(handlerfunc: Function, bindContext: any): void;
     renderTemplate(templatename: any, data: any, callback: any): void;
     renderHtml(templatename: any, data: any, callback: any): void;
     toText(htmlString: any): string;

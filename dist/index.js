@@ -51,14 +51,17 @@ class mlcl_mailer {
                             if (err) {
                                 returnmsgobject = {
                                     status: 'error',
-                                    data: err
+                                    data: msgobject,
+                                    error: err
                                 };
                                 ch.nack(msg);
                             }
                             else {
+                                info.sentTime = new Date();
                                 returnmsgobject = {
                                     status: 'success',
-                                    data: msgobject
+                                    data: msgobject,
+                                    info: info
                                 };
                                 ch.ack(msg);
                             }
@@ -193,8 +196,13 @@ class mlcl_mailer {
             }
         });
     }
-    registerHandler(handlerfunc) {
-        this.stack.push(handlerfunc);
+    registerHandler(handlerfunc, bindContext) {
+        if (bindContext) {
+            this.stack.push(handlerfunc.bind(bindContext));
+        }
+        else {
+            this.stack.push(handlerfunc);
+        }
     }
     renderTemplate(templatename, data, callback) {
         this.renderHtml(templatename, data, (err, html) => {

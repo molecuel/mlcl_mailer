@@ -91,16 +91,17 @@ class mlcl_mailer {
               if (err) {
                 returnmsgobject = {
                   status: 'error',
-                  data: err
+                  data: msgobject,
+                  error: err
                 };
-                // Negative acknowledgement of sendMail
                 ch.nack(msg);
               } else {
+                info.sentTime = new Date();
                 returnmsgobject = {
                   status: 'success',
-                  data: msgobject
+                  data: msgobject,
+                  info: info
                 };
-                // Positive acknowledgement of sendMail
                 ch.ack(msg);
               }
               ch.sendToQueue(responseQname, new Buffer(JSON.stringify(returnmsgobject)));
@@ -275,8 +276,12 @@ class mlcl_mailer {
    * @param handlerfunc Function
    * @return void
    */
-  public registerHandler(handlerfunc: Function): void {
-    this.stack.push(handlerfunc);
+  public registerHandler(handlerfunc: Function, bindContext: any): void {
+    if (bindContext) {
+      this.stack.push(handlerfunc.bind(bindContext));
+    } else {
+      this.stack.push(handlerfunc);
+    }
   }
 
 
