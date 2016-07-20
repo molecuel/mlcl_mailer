@@ -113,7 +113,7 @@ class mlcl_mailer {
         this.molecuel.emit('mlcl::mailer::init:post', this);
     }
     sendToQueue(qobject, callback) {
-        if (qobject.from && qobject.to && qobject.subject && qobject.template) {
+        if (qobject.from && qobject.to && (qobject.subject || qobject.subjectTemplate) && qobject.template) {
             qobject.uuid = uuid.v4();
             let qname = 'mlcl::mailer:sendq';
             let chan = this.queue.getChannel();
@@ -165,6 +165,9 @@ class mlcl_mailer {
         if (mailoptions.data) {
             data = mailoptions.data;
         }
+        if (mailoptions.subject) {
+            data.subject = mailoptions.subject;
+        }
         this.renderTemplate(mailoptions.template, data, (err, templatedata) => {
             if (!err) {
                 if (templatedata.text) {
@@ -172,6 +175,9 @@ class mlcl_mailer {
                 }
                 if (templatedata.html) {
                     mailoptions.html = templatedata.html;
+                }
+                if (mailoptions.subjectTemplate) {
+                    mailoptions.subject = this.handlebarCompile(data, mailoptions.subjectTemplate);
                 }
                 this.transporter.sendMail(mailoptions, (error, info) => {
                     if (error) {
@@ -219,27 +225,13 @@ class mlcl_mailer {
     }
     renderHtml(templatename, data, callback) {
         let templateDir = this.config.templateDir;
-        let handlebarsinstance = handlebars.create();
         fs.readFile(templateDir + '/' + templatename + '.hbs', 'utf8', (err, templatestr) => {
             if (err) {
                 callback(err);
             }
             else {
                 try {
-                    let lang = data.lang;
-                    if (!data.lang) {
-                        lang = 'en';
-                    }
-                    if (this.i18n) {
-                        let i18n = this.i18n.getLocalizationInstanceForLanguage(lang);
-                        let translate = i18n.i18next.getFixedT(lang);
-                        handlebarsinstance.registerHelper('translate', function (translatestring) {
-                            let translation = translate(translatestring, data);
-                            return translation;
-                        });
-                    }
-                    let compiled = handlebarsinstance.compile(templatestr);
-                    let htmlstring = compiled(data);
+                    let htmlstring = this.handlebarCompile(data, templatestr);
                     callback(null, htmlstring);
                 }
                 catch (e) {
@@ -247,6 +239,24 @@ class mlcl_mailer {
                 }
             }
         });
+    }
+    handlebarCompile(data, templatestr) {
+        let handlebarsinstance = handlebars.create();
+        let lang = data.lang;
+        if (!data.lang) {
+            lang = 'en';
+        }
+        if (this.i18n) {
+            let i18n = this.i18n.getLocalizationInstanceForLanguage(lang);
+            let translate = i18n.i18next.getFixedT(lang);
+            handlebarsinstance.registerHelper('translate', function (translatestring) {
+                let translation = translate(translatestring, data);
+                return translation;
+            });
+        }
+        let compiled = handlebarsinstance.compile(templatestr);
+        let htmlstring = compiled(data);
+        return htmlstring;
     }
     toText(htmlString) {
         return htmlToText.fromString(htmlString);
@@ -265,3 +275,5 @@ class mlcl_mailer {
 }
 mlcl_mailer.loaderversion = 2;
 module.exports = mlcl_mailer;
+
+//# sourceMappingURL=index.js.map

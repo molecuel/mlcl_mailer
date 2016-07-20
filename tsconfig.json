@@ -10,7 +10,7 @@
   },
   "files": [
     "typings/index.d.ts",
-    "typings_override/main.d.ts",
+    "typings_override/index.d.ts",
     "src/index.ts",
     "src/config.ts"
   ],

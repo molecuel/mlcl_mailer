@@ -21,12 +21,14 @@
   "bugs": {
     "url": "https://github.com/molecuel/mlcl_mailer/issues"
   },
+  "typings": "dist/index.d.ts",
   "homepage": "https://github.com/molecuel/mlcl_mailer#readme",
   "devDependencies": {
     "assert": ">=0.0.1",
     "del": "^2.2.0",
     "gulp": "^3.9.1",
     "gulp-plumber": "^1.1.0",
+    "gulp-sourcemaps": "^1.6.0",
     "gulp-tsconfig-files": "^0.2.5",
     "gulp-tslint": "^4.3.2",
     "gulp-typescript": "^2.12.0",

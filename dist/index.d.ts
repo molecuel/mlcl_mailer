@@ -16,6 +16,7 @@ declare class mlcl_mailer {
     registerHandler(handlerfunc: Function, bindContext: any): void;
     renderTemplate(templatename: any, data: any, callback: any): void;
     renderHtml(templatename: any, data: any, callback: any): void;
+    handlebarCompile(data: any, templatestr: string): string;
     toText(htmlString: any): string;
     private execHandler(channel, responseobject);
 }

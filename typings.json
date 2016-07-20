@@ -27,5 +27,8 @@
     "should": "registry:dt/should#8.1.1+20160316155526",
     "vinyl": "github:DefinitelyTyped/DefinitelyTyped/vinyl/vinyl.d.ts#4ead81cc68ab1a2cd824de4394e1bda72b1b9f92",
     "when": "registry:dt/when#2.4.0+20160317120654"
+  },
+  "devDependencies": {
+    "node-uuid": "registry:npm/node-uuid#1.4.7+20160503013124"
   }
 }
