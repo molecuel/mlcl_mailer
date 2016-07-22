@@ -8,10 +8,7 @@ import async = require('async');
 import fs = require('fs');
 import htmlToText = require('html-to-text');
 import handlebars = require('handlebars');
-
-require('handlebars-helpers')({
-  handlebars: handlebars
-});
+import hbhelpers = require('handlebars-helpers');
 
 class mlcl_mailer {
   public static loaderversion = 2;              // version number
@@ -23,7 +20,6 @@ class mlcl_mailer {
   protected queue: any;                         // rabbit queue
   private stack: Array<Function>;               // custom functions to use as processor in response handling
   public i18n: any;
-
   /**
    * mlcl_mailer constructor listens to queue and process jobs
    * @param mlcl any
@@ -333,6 +329,7 @@ class mlcl_mailer {
 
   public handlebarCompile(data, templatestr: string): string {
     let handlebarsinstance = handlebars.create();
+    hbhelpers({ handlebars: handlebarsinstance });
     let lang = data.lang;
     if (!data.lang) {
       lang = 'en';

@@ -6,9 +6,7 @@ const async = require('async');
 const fs = require('fs');
 const htmlToText = require('html-to-text');
 const handlebars = require('handlebars');
-require('handlebars-helpers')({
-    handlebars: handlebars
-});
+const hbhelpers = require('handlebars-helpers');
 class mlcl_mailer {
     constructor(mlcl, config) {
         this.molecuel = mlcl;
@@ -245,6 +243,7 @@ class mlcl_mailer {
     }
     handlebarCompile(data, templatestr) {
         let handlebarsinstance = handlebars.create();
+        hbhelpers({ handlebars: handlebarsinstance });
         let lang = data.lang;
         if (!data.lang) {
             lang = 'en';
