@@ -6,6 +6,9 @@ const async = require('async');
 const fs = require('fs');
 const htmlToText = require('html-to-text');
 const handlebars = require('handlebars');
+require('handlebars-helpers')({
+    handlebars: handlebars
+});
 class mlcl_mailer {
     constructor(mlcl, config) {
         this.molecuel = mlcl;

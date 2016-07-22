@@ -9,6 +9,10 @@ import fs = require('fs');
 import htmlToText = require('html-to-text');
 import handlebars = require('handlebars');
 
+require('handlebars-helpers')({
+  handlebars: handlebars
+});
+
 class mlcl_mailer {
   public static loaderversion = 2;              // version number
   public transporter: nodemailer.Transporter;   // a nodemailer object
