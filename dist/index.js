@@ -1,7 +1,7 @@
 'use strict';
 const nodemailer = require('nodemailer');
 const nodemailerSesTransport = require('nodemailer-ses-transport');
-const uuid = require('node-uuid');
+const uuid = require('uuid');
 const async = require('async');
 const fs = require('fs');
 const htmlToText = require('html-to-text');
