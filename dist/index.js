@@ -49,6 +49,7 @@ class mlcl_mailer {
                         let msgobject = JSON.parse(m);
                         this.sendMail(msgobject, (err, info, mailoptions) => {
                             let returnmsgobject;
+                            this.molecuel.log.debug('mailer', 'Send mail debug', info);
                             if (err) {
                                 returnmsgobject = {
                                     status: 'error',
@@ -188,7 +189,6 @@ class mlcl_mailer {
                 this.transporter.sendMail(mailoptions, (error, info) => {
                     if (error) {
                         let messageid = null;
-                        this.molecuel.log.debug('mailer', 'Send mail debug', info);
                         if (info && info.messageId) {
                             messageid = info.messageId;
                         }

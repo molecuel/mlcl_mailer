@@ -86,7 +86,7 @@ class mlcl_mailer {
             this.sendMail(msgobject, (err, info, mailoptions) => {
               // save the state in this object
               let returnmsgobject;
-
+              this.molecuel.log.debug('mailer', 'Send mail debug', info);
               // Catch all err/success and send returnmsgobject to response queue
               if (err) {
                 returnmsgobject = {
@@ -258,7 +258,6 @@ class mlcl_mailer {
         this.transporter.sendMail(mailoptions, (error, info) => {
           if (error) {
             let messageid = null;
-            this.molecuel.log.debug('mailer', 'Send mail debug', info);
             if (info && info.messageId) {
               messageid = info.messageId;
             }
