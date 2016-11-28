@@ -187,20 +187,22 @@ class mlcl_mailer {
                     mailoptions.subject = this.handlebarCompile(data, mailoptions.subjectTemplate);
                 }
                 this.transporter.sendMail(mailoptions, (error, info) => {
+                    let returnInfo = {};
+                    if (info && info.messageId && typeof info.messageId === 'string') {
+                        let split = info.messageId.split('@');
+                        returnInfo.messageId = split[0];
+                        returnInfo.messageHost = split[1];
+                    }
                     if (error) {
-                        let messageid = null;
-                        if (info && info.messageId) {
-                            messageid = info.messageId;
-                        }
-                        this.molecuel.log.error('mailer', 'Error while delivering mail', { messageId: messageid, error: error });
+                        this.molecuel.log.error('mailer', 'Error while delivering mail', { messageId: returnInfo.messageId, error: error });
                         this.molecuel.emit('mlcl::mailer::message:error', this, mailoptions, error);
                     }
                     else {
-                        this.molecuel.log.info('mailer', 'Mail queued', { messageId: info.messageId });
+                        this.molecuel.log.info('mailer', 'Mail queued', { messageId: returnInfo.messageId });
                         this.molecuel.emit('mlcl::mailer::message:success', this, mailoptions, info);
                     }
                     if (callback) {
-                        callback(error, info, mailoptions);
+                        callback(error, returnInfo, mailoptions);
                     }
                 });
             }
