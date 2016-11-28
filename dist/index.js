@@ -55,7 +55,7 @@ class mlcl_mailer {
                                     data: msgobject,
                                     error: err
                                 };
-                                if (err && !err.retryable) {
+                                if (err && err.retryable === false) {
                                     ch.ack(msg);
                                 }
                                 else {
@@ -188,6 +188,7 @@ class mlcl_mailer {
                 this.transporter.sendMail(mailoptions, (error, info) => {
                     if (error) {
                         let messageid = null;
+                        this.molecuel.log.debug('mailer', 'Send mail debug', info);
                         if (info && info.messageId) {
                             messageid = info.messageId;
                         }

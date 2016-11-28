@@ -258,6 +258,7 @@ class mlcl_mailer {
         this.transporter.sendMail(mailoptions, (error, info) => {
           if (error) {
             let messageid = null;
+            this.molecuel.log.debug('mailer', 'Send mail debug', info);
             if (info && info.messageId) {
               messageid = info.messageId;
             }
