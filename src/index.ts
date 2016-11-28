@@ -3,7 +3,7 @@ import nodemailer = require('nodemailer');
 // import fs = require('fs');
 // import dkim = require('nodemailer-dkim');
 import nodemailerSesTransport = require('nodemailer-ses-transport');
-import uuid = require('node-uuid');
+import uuid = require('uuid');
 import async = require('async');
 import fs = require('fs');
 import htmlToText = require('html-to-text');
@@ -94,7 +94,11 @@ class mlcl_mailer {
                   data: msgobject,
                   error: err
                 };
-                ch.nack(msg);
+                if(err && !err.retryable) {
+                  ch.ack(msg);
+                } else {
+                  ch.nack(msg);
+                }
               } else {
                 info.sentTime = new Date();
                 returnmsgobject = {

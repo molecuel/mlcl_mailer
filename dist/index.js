@@ -55,7 +55,12 @@ class mlcl_mailer {
                                     data: msgobject,
                                     error: err
                                 };
-                                ch.nack(msg);
+                                if (err && !err.retryable) {
+                                    ch.ack(msg);
+                                }
+                                else {
+                                    ch.nack(msg);
+                                }
                             }
                             else {
                                 info.sentTime = new Date();

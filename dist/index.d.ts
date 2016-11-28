@@ -1,3 +1,4 @@
+/// <reference types="express-handlebars" />
 import nodemailer = require('nodemailer');
 declare class mlcl_mailer {
     static loaderversion: number;
