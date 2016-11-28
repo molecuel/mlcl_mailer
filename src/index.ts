@@ -94,7 +94,7 @@ class mlcl_mailer {
                   data: msgobject,
                   error: err
                 };
-                if(err && !err.retryable) {
+                if(err && err.retryable === false) {
                   ch.ack(msg);
                 } else {
                   ch.nack(msg);
