@@ -125,7 +125,6 @@ class mlcl_mailer {
       if (mlcl.config.smtp.templateDir) {
         this.config.templateDir = mlcl.config.smtp.templateDir;
       }
-      console.log('simple smpt');
       const transport = nodemailer.createTransport(this.config.smtp);
       this.transports.smtp = transport;
     }
@@ -158,7 +157,6 @@ class mlcl_mailer {
         this.config.ses.secretAccessKey = mlcl.config.mail.ses.secretAccessKey;
         this.config.ses.rateLimit = mlcl.config.mail.ses.rateLimit || 5;
         this.config.ses.region = mlcl.config.mail.ses.region || 'eu-west-1';
-        console.log('ses');
         // SESTransporter
         const transport = nodemailer.createTransport(
           nodemailerSesTransport(this.config.ses)
@@ -166,8 +164,6 @@ class mlcl_mailer {
         this.transports.ses = transport;
       }
     }
-    console.log(mlcl.config.mail.default);
-    console.log(this.transports);
     if (mlcl.config.mail.default && this.transports[mlcl.config.mail.default]) {
       this.transporter = this.transports[mlcl.config.mail.default];
     } else {
