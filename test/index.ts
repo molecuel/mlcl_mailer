@@ -2,9 +2,9 @@
 import should = require('should');
 import assert = require('assert');
 import event = require('events');
-const mlcl_queue = require('mlcl_queue');
-const mlcl_i18n = require('mlcl_i18n');
-const mlcl_mailer = require('../dist/');
+const mlclQueue = require('mlcl_queue');
+const i18n = require('mlcl_i18n');
+const mailer = require('../src/');
 const simplesmtp = require('simplesmtp');
 
 class _mlcl extends event.EventEmitter {
@@ -19,7 +19,6 @@ describe('mlcl_mailer', function() {
   let molecuel;
   let uuid1;
   let uuid2;
-  let i18n;
 
   before(function(done) {
     let server = simplesmtp.createServer();
@@ -40,7 +39,7 @@ describe('mlcl_mailer', function() {
 
         molecuel.config = {};
         molecuel.config.queue = {
-          uri: 'amqp://localhost'
+          uri: 'amqp://guest:guest@localhost/'
         };
 
         if (process.env.NODE_ENV === 'dockerdev') {
@@ -66,43 +65,43 @@ describe('mlcl_mailer', function() {
           backend: {
             loadPath: __dirname + '/locales/{{lng}}/{{ns}}.json'
           }
-        }
+        };
 
         // Migration mailer 2.x smtp, ses, ...
         molecuel.config.mail = {
           enabled: true,
-          default: 'smtp',
+          default: 'ses',
           templateDir: __dirname + '/templates',
           smtp: {
             enabled: true,
             debug: true,
-            host: '127.0.0.1',
-            port: 2501,
+            host: 'localhost',
+            port: 465,
             auth: {
-              user: 'molecuel',
-              pass: 'molecuel'
+              user: 'username',
+              pass: 'password'
             },
-            tlsUnauth: true,
+            secure: true
           },
           ses: {
             enabled: true,
             debug: true,
             region: 'eu-west-1',
-            accessKeyId: 'YOUR_ACCESS_KEY',
-            secretAccessKey: 'YOUR_SECRET_KEY'
+            accessKeyId: 'YOUR_ACCESS_KEY_ID',
+            secretAccessKey: 'YOUR_ACCESS_KEY'
           }
-        }
+        };
 
-        new mlcl_mailer(molecuel, {});
+        new mailer(molecuel, {});
 
-        mlcl_queue(molecuel);
-        mlcl_i18n(molecuel);
+        mlclQueue(molecuel);
+        i18n(molecuel);
 
         // fake init molecuel
         molecuel.emit('mlcl::core::init:post', molecuel);
         done();
       }
-    })
+    });
 
 
   });
@@ -117,7 +116,7 @@ describe('mlcl_mailer', function() {
       };
 
       let register3 = function(obj) {
-      }
+      };
 
       molecuel.mailer.registerHandler(register1);
       molecuel.mailer.registerHandler(register2);
@@ -128,17 +127,17 @@ describe('mlcl_mailer', function() {
 
     it('should send a mail', function(done) {
       // setup e-mail data with unicode symbols
-      var mailOptions = {
+      const mailOptions = {
         from: 'dominic.boettger@inspirationlabs.com',
-        to: 'dominic.boettger@inspirationlabs.com',
+        to: 'alexander.knapstein@inspirationlabs.com',
         subject: 'Test',
         template: 'email',
         data: {
           name: 'Myname'
         }
-      }
+      };
 
-      var successcb = function(mailer, message, info) {
+      const successcb = function(mailer, message, info) {
         molecuel.removeListener('mlcl::mailer::message:success', successcb);
         molecuel.removeListener('mlcl::mailer::message:error', failcb);
         done();
@@ -146,7 +145,7 @@ describe('mlcl_mailer', function() {
 
       molecuel.on('mlcl::mailer::message:success', successcb);
 
-      var failcb = function(mailer, message, error) {
+      const failcb = function(mailer, message, error) {
         molecuel.removeListener('mlcl::mailer::message:success', successcb);
         molecuel.removeListener('mlcl::mailer::message:error', failcb);
         should.not.exist(error);
@@ -159,26 +158,28 @@ describe('mlcl_mailer', function() {
 
     it('should send a mail end return via callback', function(done) {
       // setup e-mail data with unicode symbols
-      var mailOptions = {
+      const mailOptions = {
         from: 'dominic.boettger@inspirationlabs.com',
-        to: 'dominic.boettger@inspirationlabs.com',
+        to: 'alexander.knapstein@inspirationlabs.com',
         subject: 'Test',
         template: 'email',
         data: {
           name: 'Myname'
-        }
-      }
+        },
+        transport: 'smtp'
+      };
 
       molecuel.mailer.sendMail(mailOptions, function(err, info, data) {
         should.not.exist(err);
         done();
       });
     });
+
     it('should send to queue', function(done) {
       // setup Qdata with E-Mail options
       let qoptions = {
         from: 'dominic.boettger@inspirationlabs.com',
-        to: 'dominic.boettger@inspirationlabs.com',
+        to: 'alexander.knapstein@inspirationlabs.com',
         cc: 'dominic.boettger@inspirationlabs.com',
         subject: 'Subject',
         template: 'email',
@@ -191,7 +192,7 @@ describe('mlcl_mailer', function() {
           option1: 'option_value1',
           option2: 'option_value2'
         }
-      }
+      };
 
       molecuel.mailer.sendToQueue(qoptions, function(error, qobject) {
         should.not.exist(error);
@@ -205,7 +206,7 @@ describe('mlcl_mailer', function() {
       // setup Qdata with E-Mail options
       let qoptions = {
         from: 'dominic.boettger@inspirationlabs.com',
-        to: 'dominic.boettger@inspirationlabs.com',
+        to: 'alexander.knapstein@inspirationlabs.com',
         cc: 'dominic.boettger@inspirationlabs.com',
         subject: 'Subject',
         template: 'email',
@@ -218,7 +219,7 @@ describe('mlcl_mailer', function() {
           option1: 'option_value1',
           option2: 'option_value2'
         }
-      }
+      };
 
       molecuel.mailer.sendToQueue(qoptions, function(error, qobject) {
         should.not.exist(error);
@@ -232,6 +233,6 @@ describe('mlcl_mailer', function() {
       setTimeout(() => {
         done();
       }, 1000);
-    })
+    });
   });
 });

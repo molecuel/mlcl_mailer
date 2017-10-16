@@ -1,15 +1,15 @@
 'use strict';
-const nodemailer = require('nodemailer');
-const nodemailerSesTransport = require('nodemailer-ses-transport');
-const uuid = require('uuid');
-const async = require('async');
-const fs = require('fs');
-const htmlToText = require('html-to-text');
-const handlebars = require('handlebars');
-const hbhelpers = require('handlebars-helpers');
+const nodemailer = require("nodemailer");
+const nodemailerSesTransport = require("nodemailer-ses-transport");
+const uuid = require("uuid");
+const fs = require("fs");
+const htmlToText = require("html-to-text");
+const handlebars = require("handlebars");
+const hbhelpers = require("handlebars-helpers");
 class mlcl_mailer {
     constructor(mlcl, config) {
         this.molecuel = mlcl;
+        this.transports = {};
         mlcl.mailer = this;
         this.molecuel.on('mlcl::i18n::init:post', (i18nmod) => {
             this.i18n = i18nmod;
@@ -27,16 +27,15 @@ class mlcl_mailer {
                         let parsed = JSON.parse(msg.content);
                         this.molecuel.log.debug('mlcl::mailer::queue::response::message:uuid ' + parsed.data.uuid);
                         let execHandler = this.execHandler(rch, msg);
-                        async.doWhilst((callback) => {
-                            let res = execHandler.next();
-                            callback(null, res);
-                        }, (res) => {
-                            return !res.done;
-                        }, (err) => {
-                            if (err) {
-                                this.molecuel.log.error('mlcl::mailer::queue::response::async:error: ' + err);
+                        let res = execHandler.next();
+                        do {
+                            try {
+                                res = execHandler.next();
                             }
-                        });
+                            catch (e) {
+                                this.molecuel.log.error('mlcl::mailer::queue::response::async:error: ' + e);
+                            }
+                        } while (!res.done);
                     });
                 });
                 let qname = 'mlcl::mailer:sendq';
@@ -87,17 +86,20 @@ class mlcl_mailer {
             if (mlcl.config.smtp.templateDir) {
                 this.config.templateDir = mlcl.config.smtp.templateDir;
             }
-            this.transporter = nodemailer.createTransport(this.config.smtp);
+            console.log('simple smpt');
+            const transport = nodemailer.createTransport(this.config.smtp);
+            this.transports.smtp = transport;
         }
         else if (mlcl && mlcl.config && mlcl.config.mail && mlcl.config.mail.enabled) {
-            if (mlcl.config.mail.enabled && mlcl.config.mail.smtp && mlcl.config.mail.default === 'smtp') {
+            if (mlcl.config.mail.enabled && mlcl.config.mail.smtp) {
                 this.checkSmtpConfig(mlcl.config.mail);
                 if (mlcl.config.mail.templateDir) {
                     this.config.templateDir = mlcl.config.mail.templateDir;
                 }
-                this.transporter = nodemailer.createTransport(this.config.smtp);
+                const transport = nodemailer.createTransport(this.config.smtp);
+                this.transports.smtp = transport;
             }
-            else if (mlcl.config.mail.enabled && mlcl.config.mail.ses && mlcl.config.mail.default === 'ses') {
+            if (mlcl.config.mail.enabled && mlcl.config.mail.ses) {
                 if (mlcl.config.mail.ses.tlsUnauth) {
                     process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
                 }
@@ -114,8 +116,18 @@ class mlcl_mailer {
                 this.config.ses.secretAccessKey = mlcl.config.mail.ses.secretAccessKey;
                 this.config.ses.rateLimit = mlcl.config.mail.ses.rateLimit || 5;
                 this.config.ses.region = mlcl.config.mail.ses.region || 'eu-west-1';
-                this.transporter = nodemailer.createTransport(nodemailerSesTransport(this.config.ses));
+                console.log('ses');
+                const transport = nodemailer.createTransport(nodemailerSesTransport(this.config.ses));
+                this.transports.ses = transport;
             }
+        }
+        console.log(mlcl.config.mail.default);
+        console.log(this.transports);
+        if (mlcl.config.mail.default && this.transports[mlcl.config.mail.default]) {
+            this.transporter = this.transports[mlcl.config.mail.default];
+        }
+        else {
+            throw new Error('A default mail transport must be defined');
         }
         this.molecuel.emit('mlcl::mailer::init:post', this);
     }
@@ -181,12 +193,17 @@ class mlcl_mailer {
                     mailoptions.text = templatedata.text;
                 }
                 if (templatedata.html) {
-                    mailoptions.html = templatedata.html;
+                    mailoptions.html = 'somehtml';
                 }
                 if (mailoptions.subjectTemplate) {
                     mailoptions.subject = this.handlebarCompile(data, mailoptions.subjectTemplate);
                 }
-                this.transporter.sendMail(mailoptions, (error, info) => {
+                let transporter = this.transporter;
+                if (mailoptions.transport) {
+                    transporter = this.transports[mailoptions.transport];
+                    delete (mailoptions.transport);
+                }
+                transporter.sendMail(mailoptions, (error, info) => {
                     let returnInfo = {};
                     if (info && info.messageId && typeof info.messageId === 'string') {
                         let split = info.messageId.split('@');
@@ -207,6 +224,7 @@ class mlcl_mailer {
                 });
             }
             else {
+                console.log('template error');
                 this.molecuel.log.error('mailer', 'Error while rendering template', err);
             }
         });
@@ -285,5 +303,4 @@ class mlcl_mailer {
 }
 mlcl_mailer.loaderversion = 2;
 module.exports = mlcl_mailer;
-
 //# sourceMappingURL=index.js.map

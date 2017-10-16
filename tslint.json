@@ -3,7 +3,7 @@
     "comment-format": [true, "check-space"],
     "indent": [true, "spaces"],
     "no-duplicate-variable": true,
-    "no-unused-variable": [true],
+    "no-unused-variable": [false],
     "no-eval": true,
     "no-internal-module": true,
     "no-trailing-whitespace": true,

@@ -3,6 +3,7 @@ import nodemailer = require('nodemailer');
 declare class mlcl_mailer {
     static loaderversion: number;
     transporter: nodemailer.Transporter;
+    transports: any;
     config: any;
     protected viewEngine: Exphbs;
     protected templateEngine: any;

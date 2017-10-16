@@ -1,18 +1,22 @@
 {
-  "compileOnSave": false,
+  "compileOnSave": true,
   "compilerOptions": {
     "target": "es6",
     "module": "commonjs",
     "declaration": true,
     "removeComments": true,
     "preserveConstEnums": true,
-    "sourceMap": false
+    "sourceMap": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
   },
-  "files": [
-    "typings/index.d.ts",
-    "typings_override/index.d.ts",
-    "src/index.ts",
-    "src/config.ts"
+  "include": [
+      "src/**/*",
+      "test/**/*"
+  ],
+  "exclude": [
+      "node_modules",
+      "**/*.spec.ts"
   ],
   "atom": {
     "rewriteTsconfig": false,
