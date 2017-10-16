@@ -189,7 +189,7 @@ class mlcl_mailer {
                     mailoptions.text = templatedata.text;
                 }
                 if (templatedata.html) {
-                    mailoptions.html = 'somehtml';
+                    mailoptions.html = templatedata.html;
                 }
                 if (mailoptions.subjectTemplate) {
                     mailoptions.subject = this.handlebarCompile(data, mailoptions.subjectTemplate);
@@ -220,7 +220,6 @@ class mlcl_mailer {
                 });
             }
             else {
-                console.log('template error');
                 this.molecuel.log.error('mailer', 'Error while rendering template', err);
             }
         });
