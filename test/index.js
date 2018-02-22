@@ -65,20 +65,20 @@ describe('mlcl_mailer', function () {
                     smtp: {
                         enabled: true,
                         debug: true,
-                        host: 'localhost',
-                        port: 465,
+                        host: '127.0.0.1',
+                        port: 2501,
                         auth: {
-                            user: 'username',
-                            pass: 'password'
+                            user: 'molecuel',
+                            pass: 'molecuel'
                         },
-                        secure: true
+                        tlsUnauth: true,
                     },
                     ses: {
                         enabled: true,
                         debug: true,
                         region: 'eu-west-1',
-                        accessKeyId: 'YOUR_ACCESS_KEY_ID',
-                        secretAccessKey: 'YOUR_ACCESS_KEY'
+                        accessKeyId: process.env.AWS_SES_ACCESS_KEY_ID,
+                        secretAccessKey: process.env.AWS_SES_ACCESS_KEY
                     }
                 };
                 new mailer(molecuel, {});
