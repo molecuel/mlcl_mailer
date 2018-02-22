@@ -78,7 +78,7 @@ class mlcl_mailer {
           if(!err) {
             this.queue.client.createReceiver(qname).then((receiver) => {
               receiver.on('message', (msg) => {
-                let m = msg.body.toString();
+                let m = msg.body;
                 //  this.molecuel.log.debug('mlcl::mailer::queue::send:message: ' + m);
                 let msgobject = JSON.parse(m);
                 this.sendMail(msgobject, (err, info, mailoptions) => {

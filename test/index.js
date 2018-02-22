@@ -32,9 +32,7 @@ describe('mlcl_mailer', function () {
                 molecuel.serverroles = {};
                 molecuel.serverroles.worker = true;
                 molecuel.config = {};
-                molecuel.config.queue = {
-                    uri: 'amqp://guest:guest@localhost/'
-                };
+                molecuel.config.queue = {};
                 if (process.env.NODE_ENV === 'dockerdev') {
                     molecuel.config.queue = {
                         uri: 'amqp://192.168.99.100'
@@ -85,7 +83,9 @@ describe('mlcl_mailer', function () {
                 mlclQueue(molecuel);
                 i18n(molecuel);
                 molecuel.emit('mlcl::core::init:post', molecuel);
-                done();
+                molecuel.on('mlcl::queue::init:post', (queue) => {
+                    done();
+                });
             }
         });
     });
@@ -136,7 +136,7 @@ describe('mlcl_mailer', function () {
                 data: {
                     name: 'Myname'
                 },
-                transport: 'smtp'
+                transport: 'ses'
             };
             molecuel.mailer.sendMail(mailOptions, function (err, info, data) {
                 should.not.exist(err);

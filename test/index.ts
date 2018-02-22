@@ -39,7 +39,6 @@ describe('mlcl_mailer', function() {
 
         molecuel.config = {};
         molecuel.config.queue = {
-          uri: 'amqp://guest:guest@localhost/'
         };
 
         if (process.env.NODE_ENV === 'dockerdev') {
@@ -99,11 +98,12 @@ describe('mlcl_mailer', function() {
 
         // fake init molecuel
         molecuel.emit('mlcl::core::init:post', molecuel);
-        done();
+        // wait until queue is being setup
+        molecuel.on('mlcl::queue::init:post', (queue) => {
+          done();
+        });
       }
     });
-
-
   });
 
   describe('mailer', function() {
@@ -124,7 +124,7 @@ describe('mlcl_mailer', function() {
 
       done();
     });
-
+    
     it('should send a mail', function(done) {
       // setup e-mail data with unicode symbols
       const mailOptions = {
@@ -166,7 +166,7 @@ describe('mlcl_mailer', function() {
         data: {
           name: 'Myname'
         },
-        transport: 'smtp'
+        transport: 'ses'
       };
 
       molecuel.mailer.sendMail(mailOptions, function(err, info, data) {
