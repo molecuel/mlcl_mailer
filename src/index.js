@@ -18,64 +18,72 @@ class mlcl_mailer {
         this.molecuel.on('mlcl::queue::init:post', (queue) => {
             this.queue = queue;
             if (this.molecuel.serverroles && this.molecuel.serverroles.worker) {
-                let responseQname = 'mlcl::mailer:responseq';
-                let responseChan = this.queue.getChannel();
-                responseChan.then((rch) => {
-                    rch.assertQueue(responseQname);
-                    rch.prefetch(50);
-                    rch.consume(responseQname, (msg) => {
-                        let parsed = JSON.parse(msg.content);
-                        this.molecuel.log.debug('mlcl::mailer::queue::response::message:uuid ' + parsed.data.uuid);
-                        let execHandler = this.execHandler(rch, msg);
-                        let res = execHandler.next();
-                        do {
-                            try {
-                                res = execHandler.next();
-                            }
-                            catch (e) {
-                                this.molecuel.log.error('mlcl::mailer::queue::response::async:error: ' + e);
-                            }
-                        } while (!res.done);
-                    });
-                });
-                let qname = 'mlcl::mailer:sendq';
-                let chan = this.queue.getChannel();
-                chan.then((ch) => {
-                    ch.assertQueue(qname);
-                    ch.prefetch(50);
-                    ch.consume(qname, (msg) => {
-                        let m = msg.content.toString();
-                        let msgobject = JSON.parse(m);
-                        this.sendMail(msgobject, (err, info, mailoptions) => {
-                            let returnmsgobject;
-                            this.molecuel.log.debug('mailer', 'Send mail debug', info);
-                            if (err) {
-                                returnmsgobject = {
-                                    status: 'error',
-                                    data: msgobject,
-                                    error: err
-                                };
-                                if (err && err.retryable === false) {
-                                    ch.ack(msg);
-                                }
-                                else {
-                                    ch.nack(msg);
-                                }
-                            }
-                            else {
-                                info.sentTime = new Date();
-                                returnmsgobject = {
-                                    status: 'success',
-                                    data: msgobject,
-                                    info: info
-                                };
-                                ch.ack(msg);
-                            }
-                            ch.sendToQueue(responseQname, new Buffer(JSON.stringify(returnmsgobject)));
+                let responseQname = 'mlcl__mailer_responseq';
+                this.queue.ensureQueue(responseQname, (err) => {
+                    if (!err) {
+                        this.queue.client.createReceiver(responseQname).then((receiver) => {
+                            receiver.on('message', (msg) => {
+                                let parsed = JSON.parse(msg.body);
+                                this.molecuel.log.debug('mlcl::mailer::queue::response::message:uuid ' + parsed.data.uuid);
+                                let execHandler = this.execHandler(receiver, msg);
+                                let res = execHandler.next();
+                                do {
+                                    try {
+                                        res = execHandler.next();
+                                    }
+                                    catch (e) {
+                                        this.molecuel.log.error('mlcl::mailer::queue::response::async:error: ' + e);
+                                    }
+                                } while (!res.done);
+                            });
                         });
-                    });
-                }).then(null, function (error) {
-                    this.molecuel.log.error('mlcl_mailer', error);
+                    }
+                    else {
+                        this.molecuel.log.error('mlcl_mailer', err);
+                    }
+                });
+                let qname = 'mlcl__mailer_sendq';
+                this.queue.ensureQueue(qname, (err) => {
+                    if (!err) {
+                        this.queue.client.createReceiver(qname).then((receiver) => {
+                            receiver.on('message', (msg) => {
+                                let m = msg.body.toString();
+                                let msgobject = JSON.parse(m);
+                                this.sendMail(msgobject, (err, info, mailoptions) => {
+                                    let returnmsgobject;
+                                    this.molecuel.log.debug('mailer', 'Send mail debug', info);
+                                    if (err) {
+                                        returnmsgobject = {
+                                            status: 'error',
+                                            data: msgobject,
+                                            error: err
+                                        };
+                                        if (err && err.retryable === false) {
+                                            receiver.accept(msg);
+                                        }
+                                        else {
+                                            receiver.release(msg);
+                                        }
+                                    }
+                                    else {
+                                        info.sentTime = new Date();
+                                        returnmsgobject = {
+                                            status: 'success',
+                                            data: msgobject,
+                                            info: info
+                                        };
+                                        receiver.accept(msg);
+                                    }
+                                    this.queue.client.createSender(responseQname).then((sender) => {
+                                        sender.send(JSON.stringify(returnmsgobject));
+                                    });
+                                });
+                            });
+                        });
+                    }
+                    else {
+                        this.molecuel.log.error('mlcl_mailer', err);
+                    }
                 });
             }
         });
@@ -130,21 +138,21 @@ class mlcl_mailer {
     sendToQueue(qobject, callback) {
         if (qobject.from && qobject.to && (qobject.subject || qobject.subjectTemplate) && qobject.template) {
             qobject.uuid = uuid.v4();
-            let qname = 'mlcl::mailer:sendq';
-            let chan = this.queue.getChannel();
-            chan.then((ch) => {
-                ch.assertQueue(qname);
-                ch.sendToQueue(qname, new Buffer(JSON.stringify(qobject)));
-                if (callback) {
-                    callback(null, qobject);
+            let qname = 'mlcl__mailer_sendq';
+            this.queue.ensureQueue(qname, (err) => {
+                if (!err) {
+                    this.queue.client.createSender(qname).then((sender) => {
+                        sender.send(JSON.stringify(qobject));
+                        if (callback) {
+                            callback(null, qobject);
+                        }
+                    });
                 }
-            })
-                .then(null, (error) => {
-                if (error) {
-                    this.molecuel.log.error('mailer', 'sendToQueue :: error while sending to queue', error);
-                }
-                if (callback) {
-                    callback(error, qobject);
+                else {
+                    this.molecuel.log.error('mailer', 'sendToQueue :: error while sending to queue', err);
+                    if (callback) {
+                        callback(err, qobject);
+                    }
                 }
             });
         }
@@ -284,15 +292,15 @@ class mlcl_mailer {
     toText(htmlString) {
         return htmlToText.fromString(htmlString);
     }
-    *execHandler(channel, responseobject) {
+    *execHandler(receiver, responseobject) {
         try {
             for (let i in this.stack) {
                 yield this.stack[i](responseobject);
             }
-            channel.ack(responseobject);
+            receiver.accept(responseobject);
         }
         catch (err) {
-            channel.nack(responseobject);
+            receiver.release(responseobject);
         }
     }
 }
