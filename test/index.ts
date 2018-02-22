@@ -124,7 +124,7 @@ describe('mlcl_mailer', function() {
 
       done();
     });
-    
+
     it('should send a mail', function(done) {
       // setup e-mail data with unicode symbols
       const mailOptions = {
