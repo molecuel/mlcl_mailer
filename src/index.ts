@@ -52,8 +52,7 @@ class mlcl_mailer {
           if(!err) {
             this.queue.client.createReceiver(responseQname).then((receiver) => {
               receiver.on('message', (msg) => {
-                let parsed = JSON.parse(msg.body);
-                this.molecuel.log.debug('mlcl::mailer::queue::response::message:uuid ' + parsed.data.uuid);
+                this.molecuel.log.debug('mlcl::mailer::queue::response::message:uuid ' + msg.body.uuid);
                 // Asynchronously process the response queue stack
                 // Async 1.4.2 line 125 index.d.ts ( see issue https://github.com/DefinitelyTyped/DefinitelyTyped/issues/8937 )
                 let execHandler = this.execHandler(receiver, msg);
@@ -79,9 +78,12 @@ class mlcl_mailer {
             this.queue.client.createReceiver(qname).then((receiver) => {
               receiver.on('message', (msg) => {
                 let m = msg.body;
-                //  this.molecuel.log.debug('mlcl::mailer::queue::send:message: ' + m);
-                let msgobject = JSON.parse(m);
+                this.molecuel.log.debug('mlcl::mailer::queue::send:message: ' + msg.body.uuid);
+                let msgobject = msg.body;
                 this.sendMail(msgobject, (err, info, mailoptions) => {
+                  // delete html/text to not overlarge ServiceBus Passenger
+                  delete msgobject.html;
+                  delete msgobject.text;
                   // save the state in this object
                   let returnmsgobject;
                   this.molecuel.log.debug('mailer', 'Send mail debug', info);
@@ -107,7 +109,7 @@ class mlcl_mailer {
                     receiver.accept(msg);
                   }
                   this.queue.client.createSender(responseQname).then((sender) => {
-                    sender.send(JSON.stringify(returnmsgobject));
+                    sender.send(returnmsgobject);
                   });
                 });
               });
@@ -192,7 +194,7 @@ class mlcl_mailer {
       this.queue.ensureQueue(qname, (err) => {
         if(!err) {
           this.queue.client.createSender(qname).then((sender) => {
-            sender.send(JSON.stringify(qobject));
+            sender.send(qobject);
             if (callback) {
               callback(null, qobject);
             }
