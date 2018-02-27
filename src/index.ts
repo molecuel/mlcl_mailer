@@ -181,12 +181,16 @@ class mlcl_mailer {
 
   protected async createSender(qname: string) {
     if (!this.sender) {
-      try {
-        await this.queue.ensureQueue(qname);
-        this.sender = await this.queue.client.createSender(qname);
-      } catch(err) {
-        throw err;
-      }
+      this.queue.ensureQueue(qname, async (err) => {
+        if(err) {
+          throw err;
+        }
+        try {
+          this.sender = await this.queue.client.createSender(qname);
+        } catch(err) {
+          throw err;
+        }
+      });
     }
   }
 
