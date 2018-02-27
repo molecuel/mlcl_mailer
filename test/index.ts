@@ -2,6 +2,7 @@
 import should = require('should');
 import assert = require('assert');
 import event = require('events');
+import { timeout } from 'async';
 const mlclQueue = require('mlcl_queue');
 const i18n = require('mlcl_i18n');
 const mailer = require('../src/');
@@ -108,7 +109,7 @@ describe('mlcl_mailer', function() {
 
   describe('mailer', function() {
     it('should initialize', function(done) {
-
+      this.timeout(10000);
       let register1 = function(obj) {
       };
 
@@ -122,7 +123,9 @@ describe('mlcl_mailer', function() {
       molecuel.mailer.registerHandler(register2);
       molecuel.mailer.registerHandler(register3);
 
-      done();
+      setTimeout(() => {
+        done();
+      }, 2000);
     });
 
     it('should send a mail', function(done) {
@@ -198,7 +201,6 @@ describe('mlcl_mailer', function() {
         should.not.exist(error);
         should.exist(qobject.uuid);
         uuid1 = qobject.uuid;
-        console.log(qobject);
         done();
       });
     });
@@ -231,9 +233,10 @@ describe('mlcl_mailer', function() {
     });
 
     it('should wait to send the message', function(done) {
+      this.timeout(4000);
       setTimeout(() => {
         done();
-      }, 1000);
+      }, 3000);
     });
   });
 });

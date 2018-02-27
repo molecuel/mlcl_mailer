@@ -53,7 +53,7 @@ class mlcl_mailer {
           if(!err) {
             this.queue.client.createReceiver(responseQname).then((receiver) => {
               receiver.on('message', (msg) => {
-                this.molecuel.log.debug('mlcl::mailer::queue::response::message:uuid ' + msg.body.uuid);
+                this.molecuel.log.debug('mlcl::mailer::queue::response::message:uuid ' + msg.body.data.uuid);
                 // Asynchronously process the response queue stack
                 // Async 1.4.2 line 125 index.d.ts ( see issue https://github.com/DefinitelyTyped/DefinitelyTyped/issues/8937 )
                 let execHandler = this.execHandler(receiver, msg);

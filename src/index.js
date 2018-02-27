@@ -23,7 +23,7 @@ class mlcl_mailer {
                     if (!err) {
                         this.queue.client.createReceiver(responseQname).then((receiver) => {
                             receiver.on('message', (msg) => {
-                                this.molecuel.log.debug('mlcl::mailer::queue::response::message:uuid ' + msg.body.uuid);
+                                this.molecuel.log.debug('mlcl::mailer::queue::response::message:uuid ' + msg.body.data.uuid);
                                 let execHandler = this.execHandler(receiver, msg);
                                 let res = execHandler.next();
                                 do {

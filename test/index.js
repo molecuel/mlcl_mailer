@@ -91,6 +91,7 @@ describe('mlcl_mailer', function () {
     });
     describe('mailer', function () {
         it('should initialize', function (done) {
+            this.timeout(10000);
             let register1 = function (obj) {
             };
             let register2 = function (obj) {
@@ -100,7 +101,9 @@ describe('mlcl_mailer', function () {
             molecuel.mailer.registerHandler(register1);
             molecuel.mailer.registerHandler(register2);
             molecuel.mailer.registerHandler(register3);
-            done();
+            setTimeout(() => {
+                done();
+            }, 2000);
         });
         it('should send a mail', function (done) {
             const mailOptions = {
@@ -164,7 +167,6 @@ describe('mlcl_mailer', function () {
                 should.not.exist(error);
                 should.exist(qobject.uuid);
                 uuid1 = qobject.uuid;
-                console.log(qobject);
                 done();
             });
         });
@@ -193,9 +195,10 @@ describe('mlcl_mailer', function () {
             });
         });
         it('should wait to send the message', function (done) {
+            this.timeout(4000);
             setTimeout(() => {
                 done();
-            }, 1000);
+            }, 3000);
         });
     });
 });
