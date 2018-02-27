@@ -181,7 +181,7 @@ class mlcl_mailer {
 
   protected async createSender(qname: string) {
     if (!this.sender) {
-      this.queue.ensureQueue(qname, async (err) => {
+      this.queue.ensureQueue(qname, async function(err) {
         if(err) {
           throw err;
         }

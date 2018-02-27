@@ -148,17 +148,19 @@ class mlcl_mailer {
     createSender(qname) {
         return __awaiter(this, void 0, void 0, function* () {
             if (!this.sender) {
-                this.queue.ensureQueue(qname, (err) => __awaiter(this, void 0, void 0, function* () {
-                    if (err) {
-                        throw err;
-                    }
-                    try {
-                        this.sender = yield this.queue.client.createSender(qname);
-                    }
-                    catch (err) {
-                        throw err;
-                    }
-                }));
+                this.queue.ensureQueue(qname, function (err) {
+                    return __awaiter(this, void 0, void 0, function* () {
+                        if (err) {
+                            throw err;
+                        }
+                        try {
+                            this.sender = yield this.queue.client.createSender(qname);
+                        }
+                        catch (err) {
+                            throw err;
+                        }
+                    });
+                });
             }
         });
     }
