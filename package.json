@@ -1,6 +1,6 @@
 {
   "name": "mlcl_mailer",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "Mailer plugin for molecuel",
   "main": "src/index.js",
   "scripts": {

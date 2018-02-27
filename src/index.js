@@ -150,7 +150,7 @@ class mlcl_mailer {
             if (!this.sender) {
                 try {
                     yield this.queue.ensureQueue(qname);
-                    yield this.queue.createSender(qname);
+                    this.sender = yield this.queue.client.createSender(qname);
                 }
                 catch (err) {
                     throw err;
