@@ -44,39 +44,39 @@ class mlcl_mailer {
                 let qname = 'mlcl__mailer_sendq';
                 this.queue.ensureQueue(qname, (err) => {
                     if (!err) {
-                        this.queue.client.createReceiver(qname).then((receiver) => {
-                            receiver.on('message', (msg) => {
-                                let m = msg.body;
-                                this.molecuel.log.debug('mlcl::mailer::queue::send:message: ' + msg.body.data.uuid);
-                                let msgobject = msg.body;
-                                this.sendMail(msgobject, (err, info, mailoptions) => {
-                                    delete msgobject.html;
-                                    delete msgobject.text;
-                                    let returnmsgobject;
-                                    this.molecuel.log.debug('mailer', 'Send mail debug', info);
-                                    if (err) {
-                                        returnmsgobject = {
-                                            status: 'error',
-                                            data: msgobject,
-                                            error: err
-                                        };
-                                        if (err && err.retryable === false) {
-                                            receiver.accept(msg);
+                        this.queue.client.createSender(responseQname).then((sender) => {
+                            this.queue.client.createReceiver(qname).then((receiver) => {
+                                receiver.on('message', (msg) => {
+                                    let m = msg.body;
+                                    this.molecuel.log.debug('mlcl::mailer::queue::send:message: ' + msg.body.data.uuid);
+                                    let msgobject = msg.body;
+                                    this.sendMail(msgobject, (err, info, mailoptions) => {
+                                        delete msgobject.html;
+                                        delete msgobject.text;
+                                        let returnmsgobject;
+                                        this.molecuel.log.debug('mailer', 'Send mail debug', info);
+                                        if (err) {
+                                            returnmsgobject = {
+                                                status: 'error',
+                                                data: msgobject,
+                                                error: err
+                                            };
+                                            if (err && err.retryable === false) {
+                                                receiver.accept(msg);
+                                            }
+                                            else {
+                                                receiver.release(msg);
+                                            }
                                         }
                                         else {
-                                            receiver.release(msg);
+                                            info.sentTime = new Date();
+                                            returnmsgobject = {
+                                                status: 'success',
+                                                data: msgobject,
+                                                info: info
+                                            };
+                                            receiver.accept(msg);
                                         }
-                                    }
-                                    else {
-                                        info.sentTime = new Date();
-                                        returnmsgobject = {
-                                            status: 'success',
-                                            data: msgobject,
-                                            info: info
-                                        };
-                                        receiver.accept(msg);
-                                    }
-                                    this.queue.client.createSender(responseQname).then((sender) => {
                                         sender.send(returnmsgobject);
                                     });
                                 });

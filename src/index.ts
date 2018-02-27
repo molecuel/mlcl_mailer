@@ -75,40 +75,40 @@ class mlcl_mailer {
         let qname = 'mlcl__mailer_sendq';
         this.queue.ensureQueue(qname, (err) => {
           if(!err) {
-            this.queue.client.createReceiver(qname).then((receiver) => {
-              receiver.on('message', (msg) => {
-                let m = msg.body;
-                this.molecuel.log.debug('mlcl::mailer::queue::send:message: ' + msg.body.data.uuid);
-                let msgobject = msg.body;
-                this.sendMail(msgobject, (err, info, mailoptions) => {
-                  // delete html/text to not overlarge ServiceBus Passenger
-                  delete msgobject.html;
-                  delete msgobject.text;
-                  // save the state in this object
-                  let returnmsgobject;
-                  this.molecuel.log.debug('mailer', 'Send mail debug', info);
-                  // Catch all err/success and send returnmsgobject to response queue
-                  if (err) {
-                    returnmsgobject = {
-                      status: 'error',
-                      data: msgobject,
-                      error: err
-                    };
-                    if(err && err.retryable === false) {
-                      receiver.accept(msg);
+            this.queue.client.createSender(responseQname).then((sender) => {
+              this.queue.client.createReceiver(qname).then((receiver) => {
+                receiver.on('message', (msg) => {
+                  let m = msg.body;
+                  this.molecuel.log.debug('mlcl::mailer::queue::send:message: ' + msg.body.data.uuid);
+                  let msgobject = msg.body;
+                  this.sendMail(msgobject, (err, info, mailoptions) => {
+                    // delete html/text to not overlarge ServiceBus Passenger
+                    delete msgobject.html;
+                    delete msgobject.text;
+                    // save the state in this object
+                    let returnmsgobject;
+                    this.molecuel.log.debug('mailer', 'Send mail debug', info);
+                    // Catch all err/success and send returnmsgobject to response queue
+                    if (err) {
+                      returnmsgobject = {
+                        status: 'error',
+                        data: msgobject,
+                        error: err
+                      };
+                      if(err && err.retryable === false) {
+                        receiver.accept(msg);
+                      } else {
+                        receiver.release(msg);
+                      }
                     } else {
-                      receiver.release(msg);
+                      info.sentTime = new Date();
+                      returnmsgobject = {
+                        status: 'success',
+                        data: msgobject,
+                        info: info
+                      };
+                      receiver.accept(msg);
                     }
-                  } else {
-                    info.sentTime = new Date();
-                    returnmsgobject = {
-                      status: 'success',
-                      data: msgobject,
-                      info: info
-                    };
-                    receiver.accept(msg);
-                  }
-                  this.queue.client.createSender(responseQname).then((sender) => {
                     sender.send(returnmsgobject);
                   });
                 });
