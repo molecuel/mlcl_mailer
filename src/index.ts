@@ -21,6 +21,7 @@ class mlcl_mailer {
   protected queue: any;                         // rabbit queue
   private stack: Array<Function>;               // custom functions to use as processor in response handling
   public i18n: any;
+  public sender: any;
   /**
    * mlcl_mailer constructor listens to queue and process jobs
    * @param mlcl any
@@ -177,6 +178,18 @@ class mlcl_mailer {
     this.molecuel.emit('mlcl::mailer::init:post', this);
   }
 
+
+  protected async createSender(qname: string) {
+    if (!this.sender) {
+      try {
+        await this.queue.ensureQueue(qname);
+        await this.queue.createSender(qname);
+      } catch(err) {
+        throw err;
+      }
+    }
+  }
+
   /**
    * mlcl_mailer::sendToQueue(qobject)
    * @brief If a certain threshold of E-Mails is exeeded,
@@ -184,28 +197,23 @@ class mlcl_mailer {
    * @param qobject Object containing E-Mail message fields and values
    * @return void
    */
-  public sendToQueue(qobject: any, callback?: Function): void {
+  public async sendToQueue(qobject: any) {
     // mandatory fields are from, to, subject and template
     if (qobject.from && qobject.to && (qobject.subject || qobject.subjectTemplate) && qobject.template) {
       qobject.uuid = uuid.v4();
       //  this.molecuel.log.debug('mailer', 'Sending job object to queue', qobject);
       //  publish task queues with the name given here
       let qname = 'mlcl__mailer_sendq';
-      this.queue.ensureQueue(qname, (err) => {
-        if(!err) {
-          this.queue.client.createSender(qname).then((sender) => {
-            sender.send(qobject);
-            if (callback) {
-              callback(null, qobject);
-            }
-          });
-        } else {
-          this.molecuel.log.error('mailer', 'sendToQueue :: error while sending to queue', err);
-          if (callback) {
-            callback(err, qobject);
-          }
+      try {
+        if (!this.sender) {
+          await this.createSender(qname);
         }
-      });
+        this.sender.send(qobject);
+        return qobject;
+      } catch(err) {
+        this.molecuel.log.error('mailer', 'sendToQueue :: error while sending to queue', err);
+        throw err;
+      }
     } else {
       this.molecuel.log.warn('mailer', 'sendToQueue :: missing mandatory fields', qobject);
     }

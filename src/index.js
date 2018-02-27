@@ -1,4 +1,12 @@
 'use strict';
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 const nodemailer = require("nodemailer");
 const nodemailerSesTransport = require("nodemailer-ses-transport");
 const uuid = require("uuid");
@@ -137,30 +145,40 @@ class mlcl_mailer {
         }
         this.molecuel.emit('mlcl::mailer::init:post', this);
     }
-    sendToQueue(qobject, callback) {
-        if (qobject.from && qobject.to && (qobject.subject || qobject.subjectTemplate) && qobject.template) {
-            qobject.uuid = uuid.v4();
-            let qname = 'mlcl__mailer_sendq';
-            this.queue.ensureQueue(qname, (err) => {
-                if (!err) {
-                    this.queue.client.createSender(qname).then((sender) => {
-                        sender.send(qobject);
-                        if (callback) {
-                            callback(null, qobject);
-                        }
-                    });
+    createSender(qname) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!this.sender) {
+                try {
+                    yield this.queue.ensureQueue(qname);
+                    yield this.queue.createSender(qname);
                 }
-                else {
-                    this.molecuel.log.error('mailer', 'sendToQueue :: error while sending to queue', err);
-                    if (callback) {
-                        callback(err, qobject);
+                catch (err) {
+                    throw err;
+                }
+            }
+        });
+    }
+    sendToQueue(qobject) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (qobject.from && qobject.to && (qobject.subject || qobject.subjectTemplate) && qobject.template) {
+                qobject.uuid = uuid.v4();
+                let qname = 'mlcl__mailer_sendq';
+                try {
+                    if (!this.sender) {
+                        yield this.createSender(qname);
                     }
+                    this.sender.send(qobject);
+                    return qobject;
                 }
-            });
-        }
-        else {
-            this.molecuel.log.warn('mailer', 'sendToQueue :: missing mandatory fields', qobject);
-        }
+                catch (err) {
+                    this.molecuel.log.error('mailer', 'sendToQueue :: error while sending to queue', err);
+                    throw err;
+                }
+            }
+            else {
+                this.molecuel.log.warn('mailer', 'sendToQueue :: missing mandatory fields', qobject);
+            }
+        });
     }
     checkSmtpConfig(config) {
         if (config && config.smtp && config.smtp.tlsUnauth) {
