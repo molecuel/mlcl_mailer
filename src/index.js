@@ -1,12 +1,4 @@
 'use strict';
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 const nodemailer = require("nodemailer");
 const nodemailerSesTransport = require("nodemailer-ses-transport");
 const uuid = require("uuid");
@@ -31,7 +23,7 @@ class mlcl_mailer {
                     if (!err) {
                         this.queue.client.createReceiver(responseQname).then((receiver) => {
                             receiver.on('message', (msg) => {
-                                this.molecuel.log.debug('mlcl::mailer::queue::response::message:uuid ' + msg.body.data.uuid);
+                                this.molecuel.log.debug('mlcl::mailer::queue::response::message:uuid ' + msg.body.uuid);
                                 let execHandler = this.execHandler(receiver, msg);
                                 let res = execHandler.next();
                                 do {
@@ -56,7 +48,7 @@ class mlcl_mailer {
                             this.queue.client.createReceiver(qname).then((receiver) => {
                                 receiver.on('message', (msg) => {
                                     let m = msg.body;
-                                    this.molecuel.log.debug('mlcl::mailer::queue::send:message: ' + msg.body.data.uuid);
+                                    this.molecuel.log.debug('mlcl::mailer::queue::send:message: ' + msg.body.uuid);
                                     let msgobject = msg.body;
                                     this.sendMail(msgobject, (err, info, mailoptions) => {
                                         delete msgobject.html;
@@ -145,46 +137,47 @@ class mlcl_mailer {
         }
         this.molecuel.emit('mlcl::mailer::init:post', this);
     }
-    createSender(qname) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (!this.sender) {
-                this.queue.ensureQueue(qname, function (err) {
-                    return __awaiter(this, void 0, void 0, function* () {
-                        if (err) {
-                            throw err;
-                        }
-                        try {
-                            this.sender = yield this.queue.client.createSender(qname);
-                        }
-                        catch (err) {
-                            throw err;
-                        }
+    createSender(qname, callback) {
+        if (!this.sender) {
+            this.queue.ensureQueue(qname, (err) => {
+                if (err) {
+                    callback(err);
+                }
+                else {
+                    this.queue.client.createSender(qname)
+                        .then((sender) => {
+                        this.sender = sender;
+                        callback();
                     });
-                });
-            }
-        });
+                }
+            });
+        }
+        else {
+            callback();
+        }
     }
-    sendToQueue(qobject) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (qobject.from && qobject.to && (qobject.subject || qobject.subjectTemplate) && qobject.template) {
-                qobject.uuid = uuid.v4();
-                let qname = 'mlcl__mailer_sendq';
-                try {
-                    if (!this.sender) {
-                        yield this.createSender(qname);
-                    }
+    sendToQueue(qobject, callback) {
+        if (qobject.from && qobject.to && (qobject.subject || qobject.subjectTemplate) && qobject.template) {
+            qobject.uuid = uuid.v4();
+            let qname = 'mlcl__mailer_sendq';
+            this.createSender(qname, (err) => {
+                if (!err) {
                     this.sender.send(qobject);
-                    return qobject;
+                    if (callback) {
+                        callback(null, qobject);
+                    }
                 }
-                catch (err) {
+                else {
                     this.molecuel.log.error('mailer', 'sendToQueue :: error while sending to queue', err);
-                    throw err;
+                    if (callback) {
+                        callback(err, qobject);
+                    }
                 }
-            }
-            else {
-                this.molecuel.log.warn('mailer', 'sendToQueue :: missing mandatory fields', qobject);
-            }
-        });
+            });
+        }
+        else {
+            this.molecuel.log.warn('mailer', 'sendToQueue :: missing mandatory fields', qobject);
+        }
     }
     checkSmtpConfig(config) {
         if (config && config.smtp && config.smtp.tlsUnauth) {

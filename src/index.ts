@@ -53,7 +53,7 @@ class mlcl_mailer {
           if(!err) {
             this.queue.client.createReceiver(responseQname).then((receiver) => {
               receiver.on('message', (msg) => {
-                this.molecuel.log.debug('mlcl::mailer::queue::response::message:uuid ' + msg.body.data.uuid);
+                this.molecuel.log.debug('mlcl::mailer::queue::response::message:uuid ' + msg.body.uuid);
                 // Asynchronously process the response queue stack
                 // Async 1.4.2 line 125 index.d.ts ( see issue https://github.com/DefinitelyTyped/DefinitelyTyped/issues/8937 )
                 let execHandler = this.execHandler(receiver, msg);
@@ -80,7 +80,7 @@ class mlcl_mailer {
               this.queue.client.createReceiver(qname).then((receiver) => {
                 receiver.on('message', (msg) => {
                   let m = msg.body;
-                  this.molecuel.log.debug('mlcl::mailer::queue::send:message: ' + msg.body.data.uuid);
+                  this.molecuel.log.debug('mlcl::mailer::queue::send:message: ' + msg.body.uuid);
                   let msgobject = msg.body;
                   this.sendMail(msgobject, (err, info, mailoptions) => {
                     // delete html/text to not overlarge ServiceBus Passenger
@@ -179,18 +179,21 @@ class mlcl_mailer {
   }
 
 
-  protected async createSender(qname: string) {
+  protected createSender(qname: string, callback) {
     if (!this.sender) {
-      this.queue.ensureQueue(qname, async function(err) {
+      this.queue.ensureQueue(qname, (err) => {
         if(err) {
-          throw err;
-        }
-        try {
-          this.sender = await this.queue.client.createSender(qname);
-        } catch(err) {
-          throw err;
+          callback(err);
+        } else {
+          this.queue.client.createSender(qname)
+          .then((sender) => {
+            this.sender = sender;
+            callback();
+          });
         }
       });
+    } else {
+      callback();
     }
   }
 
@@ -201,23 +204,26 @@ class mlcl_mailer {
    * @param qobject Object containing E-Mail message fields and values
    * @return void
    */
-  public async sendToQueue(qobject: any) {
+  public sendToQueue(qobject: any,  callback?: Function): void {
     // mandatory fields are from, to, subject and template
     if (qobject.from && qobject.to && (qobject.subject || qobject.subjectTemplate) && qobject.template) {
       qobject.uuid = uuid.v4();
       //  this.molecuel.log.debug('mailer', 'Sending job object to queue', qobject);
       //  publish task queues with the name given here
       let qname = 'mlcl__mailer_sendq';
-      try {
-        if (!this.sender) {
-          await this.createSender(qname);
+      this.createSender(qname, (err) => {
+        if(!err) {
+          this.sender.send(qobject);
+          if (callback) {
+            callback(null, qobject);
+          }
+        } else {
+          this.molecuel.log.error('mailer', 'sendToQueue :: error while sending to queue', err);
+          if (callback) {
+            callback(err, qobject);
+          }
         }
-        this.sender.send(qobject);
-        return qobject;
-      } catch(err) {
-        this.molecuel.log.error('mailer', 'sendToQueue :: error while sending to queue', err);
-        throw err;
-      }
+      });
     } else {
       this.molecuel.log.warn('mailer', 'sendToQueue :: missing mandatory fields', qobject);
     }

@@ -181,7 +181,7 @@ describe('mlcl_mailer', function() {
         from: 'dominic.boettger@inspirationlabs.com',
         to: 'alexander.knapstein@inspirationlabs.com',
         cc: 'dominic.boettger@inspirationlabs.com',
-        subject: 'Subject',
+        subject: 'Subject first mail',
         template: 'email',
         data: {
           anrede: 'Herr',
@@ -198,6 +198,7 @@ describe('mlcl_mailer', function() {
         should.not.exist(error);
         should.exist(qobject.uuid);
         uuid1 = qobject.uuid;
+        console.log(qobject);
         done();
       });
     });
@@ -208,7 +209,7 @@ describe('mlcl_mailer', function() {
         from: 'dominic.boettger@inspirationlabs.com',
         to: 'alexander.knapstein@inspirationlabs.com',
         cc: 'dominic.boettger@inspirationlabs.com',
-        subject: 'Subject',
+        subject: 'Subject second mail',
         template: 'email',
         data: {
           anrede: 'Herr',

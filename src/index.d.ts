@@ -13,8 +13,8 @@ declare class mlcl_mailer {
     i18n: any;
     sender: any;
     constructor(mlcl: any, config: any);
-    protected createSender(qname: string): Promise<void>;
-    sendToQueue(qobject: any): Promise<any>;
+    protected createSender(qname: string, callback: any): void;
+    sendToQueue(qobject: any, callback?: Function): void;
     checkSmtpConfig(config: any): void;
     sendMail(mailoptions: any, callback?: Function): void;
     registerHandler(handlerfunc: Function, bindContext: any): void;
