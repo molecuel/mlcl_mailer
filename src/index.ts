@@ -53,7 +53,6 @@ class mlcl_mailer {
           if(!err) {
             this.queue.client.createReceiver(responseQname).then((receiver) => {
               receiver.on('message', (msg) => {
-                console.log(msg.body);
                 this.molecuel.log.debug('mlcl::mailer::queue::response::message:uuid ' + msg.body.data.uuid);
                 // Asynchronously process the response queue stack
                 // Async 1.4.2 line 125 index.d.ts ( see issue https://github.com/DefinitelyTyped/DefinitelyTyped/issues/8937 )
@@ -74,11 +73,10 @@ class mlcl_mailer {
         });
 
         // register send queue with the name given here
-        let qname = 'temp_offline_mlcl__mailer_sendq';
+        let qname = 'mlcl__mailer_sendq';
         this.queue.ensureQueue(qname, (err) => {
           if(!err) {
             this.queue.client.createSender(responseQname).then((sender) => {
-              /*
               this.queue.client.createReceiver(qname).then((receiver) => {
                 receiver.on('message', (msg) => {
                   let m = msg.body;
@@ -115,7 +113,7 @@ class mlcl_mailer {
                     sender.send(returnmsgobject);
                   });
                 });
-              });*/
+              });
             });
           } else {
             this.molecuel.log.error('mlcl_mailer', err);
@@ -207,14 +205,12 @@ class mlcl_mailer {
    * @return void
    */
   public sendToQueue(qobject: any,  callback?: Function): void {
-    callback(null, {});
-    /*
     // mandatory fields are from, to, subject and template
     if (qobject.from && qobject.to && (qobject.subject || qobject.subjectTemplate) && qobject.template) {
       qobject.uuid = uuid.v4();
       //  this.molecuel.log.debug('mailer', 'Sending job object to queue', qobject);
       //  publish task queues with the name given here
-      let qname = 'temp_offline_mlcl__mailer_sendq';
+      let qname = 'mlcl__mailer_sendq';
       this.createSender(qname, (err) => {
         if(!err) {
           this.sender.send(qobject);
@@ -230,7 +226,7 @@ class mlcl_mailer {
       });
     } else {
       this.molecuel.log.warn('mailer', 'sendToQueue :: missing mandatory fields', qobject);
-    }*/
+    }
   }
 
   public checkSmtpConfig(config: any) {

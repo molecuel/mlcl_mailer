@@ -1,6 +1,7 @@
 'use strict';
 const nodemailer = require("nodemailer");
 const nodemailerSesTransport = require("nodemailer-ses-transport");
+const uuid = require("uuid");
 const fs = require("fs");
 const htmlToText = require("html-to-text");
 const handlebars = require("handlebars");
@@ -22,7 +23,6 @@ class mlcl_mailer {
                     if (!err) {
                         this.queue.client.createReceiver(responseQname).then((receiver) => {
                             receiver.on('message', (msg) => {
-                                console.log(msg.body);
                                 this.molecuel.log.debug('mlcl::mailer::queue::response::message:uuid ' + msg.body.data.uuid);
                                 let execHandler = this.execHandler(receiver, msg);
                                 let res = execHandler.next();
@@ -41,10 +41,41 @@ class mlcl_mailer {
                         this.molecuel.log.error('mlcl_mailer', err);
                     }
                 });
-                let qname = 'temp_offline_mlcl__mailer_sendq';
+                let qname = 'mlcl__mailer_sendq';
                 this.queue.ensureQueue(qname, (err) => {
                     if (!err) {
                         this.queue.client.createSender(responseQname).then((sender) => {
+                            this.queue.client.createReceiver(qname).then((receiver) => {
+                                receiver.on('message', (msg) => {
+                                    let m = msg.body;
+                                    this.molecuel.log.debug('mlcl::mailer::queue::send:message: ' + msg.body.uuid);
+                                    let msgobject = msg.body;
+                                    this.sendMail(msgobject, (sendError, info, mailoptions) => {
+                                        delete msgobject.html;
+                                        delete msgobject.text;
+                                        let returnmsgobject;
+                                        this.molecuel.log.debug('mailer', 'Send mail debug', info);
+                                        if (sendError) {
+                                            returnmsgobject = {
+                                                status: 'error',
+                                                data: msgobject,
+                                                error: sendError
+                                            };
+                                            receiver.accept(msg);
+                                        }
+                                        else {
+                                            info.sentTime = new Date();
+                                            returnmsgobject = {
+                                                status: 'success',
+                                                data: msgobject,
+                                                info: info
+                                            };
+                                            receiver.accept(msg);
+                                        }
+                                        sender.send(returnmsgobject);
+                                    });
+                                });
+                            });
                         });
                     }
                     else {
@@ -121,7 +152,27 @@ class mlcl_mailer {
         }
     }
     sendToQueue(qobject, callback) {
-        callback(null, {});
+        if (qobject.from && qobject.to && (qobject.subject || qobject.subjectTemplate) && qobject.template) {
+            qobject.uuid = uuid.v4();
+            let qname = 'mlcl__mailer_sendq';
+            this.createSender(qname, (err) => {
+                if (!err) {
+                    this.sender.send(qobject);
+                    if (callback) {
+                        callback(null, qobject);
+                    }
+                }
+                else {
+                    this.molecuel.log.error('mailer', 'sendToQueue :: error while sending to queue', err);
+                    if (callback) {
+                        callback(err, qobject);
+                    }
+                }
+            });
+        }
+        else {
+            this.molecuel.log.warn('mailer', 'sendToQueue :: missing mandatory fields', qobject);
+        }
     }
     checkSmtpConfig(config) {
         if (config && config.smtp && config.smtp.tlsUnauth) {
