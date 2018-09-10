@@ -22,6 +22,6 @@ declare class mlcl_mailer {
     renderHtml(templatename: any, data: any, callback: any): void;
     handlebarCompile(data: any, templatestr: string): string;
     toText(htmlString: any): string;
-    private execHandler(receiver, responseobject);
+    private execHandler;
 }
 export = mlcl_mailer;
