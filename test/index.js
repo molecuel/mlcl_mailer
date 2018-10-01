@@ -104,7 +104,7 @@ describe('mlcl_mailer', function () {
             molecuel.mailer.registerHandler(register3);
             setTimeout(() => {
                 done();
-            }, 000);
+            }, 2000);
         });
         it('should send a mail', function (done) {
             const mailOptions = {

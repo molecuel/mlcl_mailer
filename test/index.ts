@@ -126,7 +126,7 @@ describe('mlcl_mailer', function() {
 
       setTimeout(() => {
         done();
-      }, 000);
+      }, 2000);
     });
 
     it('should send a mail', function(done) {
