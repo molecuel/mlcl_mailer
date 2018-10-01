@@ -17,6 +17,7 @@ describe('mlcl_mailer', function () {
     let uuid1;
     let uuid2;
     before(function (done) {
+        this.timeout(3000);
         let server = simplesmtp.createServer();
         server.listen(2500, (err) => {
             if (err) {
@@ -103,7 +104,7 @@ describe('mlcl_mailer', function () {
             molecuel.mailer.registerHandler(register3);
             setTimeout(() => {
                 done();
-            }, 2000);
+            }, 000);
         });
         it('should send a mail', function (done) {
             const mailOptions = {
