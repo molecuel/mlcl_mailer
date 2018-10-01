@@ -1,5 +1,5 @@
 'use strict';
-import should = require('should');
+import * as should from 'should';
 import assert = require('assert');
 import event = require('events');
 import { timeout } from 'async';

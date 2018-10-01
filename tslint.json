@@ -1,5 +1,6 @@
 {
   "rules": {
+    "no-shadowed-variable": true,
     "comment-format": [true, "check-space"],
     "indent": [true, "spaces"],
     "no-duplicate-variable": true,

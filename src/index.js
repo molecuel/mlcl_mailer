@@ -85,9 +85,9 @@ class mlcl_mailer {
             }
         });
         if (mlcl && mlcl.config && mlcl.config.smtp && mlcl.config.smtp.enabled) {
-            let config = {};
-            config.smtp = mlcl.config.smtp;
-            this.checkSmtpConfig(config);
+            let mlclConfig = {};
+            mlclConfig.smtp = mlcl.config.smtp;
+            this.checkSmtpConfig(mlclConfig);
             if (mlcl.config.smtp.templateDir) {
                 this.config.templateDir = mlcl.config.smtp.templateDir;
             }
@@ -133,7 +133,7 @@ class mlcl_mailer {
         this.molecuel.emit('mlcl::mailer::init:post', this);
     }
     createSender(qname, callback) {
-        if (!this.sender) {
+        if (!this.sender || !this.sender.canSend()) {
             this.queue.ensureQueue(qname, (err) => {
                 if (err) {
                     callback(err);
@@ -142,30 +142,57 @@ class mlcl_mailer {
                     this.queue.client.createSender(qname)
                         .then((sender) => {
                         this.sender = sender;
-                        callback();
+                        callback(null, sender);
+                    })
+                        .catch((error) => {
+                        callback(error);
                     });
                 }
             });
         }
         else {
-            callback();
+            callback(null, this.sender);
         }
     }
     sendToQueue(qobject, callback) {
         if (qobject.from && qobject.to && (qobject.subject || qobject.subjectTemplate) && qobject.template) {
-            qobject.uuid = uuid.v4();
             let qname = 'mlcl__mailer_sendq';
             this.createSender(qname, (err) => {
                 if (!err) {
-                    this.sender.send(qobject);
-                    if (callback) {
-                        callback(null, qobject);
+                    try {
+                        this.sender.send(qobject)
+                            .then((res) => {
+                            qobject.uuid = uuid.v4();
+                            qobject.response = res;
+                            if (callback) {
+                                callback(null, qobject);
+                            }
+                        })
+                            .catch((error) => {
+                            if (callback) {
+                                callback(error, qobject);
+                            }
+                            else {
+                                throw new Error(error);
+                            }
+                        });
+                    }
+                    catch (error) {
+                        if (callback) {
+                            callback(new Error('Failed to send to queue'), qobject);
+                        }
+                        else {
+                            throw new Error('Failed to send to queue');
+                        }
                     }
                 }
                 else {
                     this.molecuel.log.error('mailer', 'sendToQueue :: error while sending to queue', err);
                     if (callback) {
                         callback(err, qobject);
+                    }
+                    else {
+                        throw new Error(err);
                     }
                 }
             });

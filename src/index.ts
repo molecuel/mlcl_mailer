@@ -50,7 +50,7 @@ class mlcl_mailer {
         // register response queue with the name given here
         let responseQname = 'mlcl__mailer_responseq';
         this.queue.ensureQueue(responseQname, (err) => {
-          if(!err) {
+          if (!err) {
             this.queue.client.createReceiver(responseQname).then((receiver) => {
               receiver.on('message', (msg) => {
                 this.molecuel.log.debug('mlcl::mailer::queue::response::message:uuid ' + msg.body.data.uuid);
@@ -61,7 +61,7 @@ class mlcl_mailer {
                 do {
                   try {
                     res = execHandler.next();
-                  } catch(e) {
+                  } catch (e) {
                     this.molecuel.log.error('mlcl::mailer::queue::response::async:error: ' + e);
                   }
                 } while (!res.done);
@@ -75,7 +75,7 @@ class mlcl_mailer {
         // register send queue with the name given here
         let qname = 'mlcl__mailer_sendq';
         this.queue.ensureQueue(qname, (err) => {
-          if(!err) {
+          if (!err) {
             this.queue.client.createSender(responseQname).then((sender) => {
               this.queue.client.createReceiver(qname).then((receiver) => {
                 receiver.on('message', (msg) => {
@@ -125,9 +125,9 @@ class mlcl_mailer {
     // node-mailer migration 2.x backward compatibility if smtp is configured in legacy mode
     // Legacy object is mlcl.config.smtp, new object is mlcl.config.mail.smtp
     if (mlcl && mlcl.config && mlcl.config.smtp && mlcl.config.smtp.enabled) {
-      let config: any = {};
-      config.smtp = mlcl.config.smtp;
-      this.checkSmtpConfig(config);
+      let mlclConfig: any = {};
+      mlclConfig.smtp = mlcl.config.smtp;
+      this.checkSmtpConfig(mlclConfig);
       if (mlcl.config.smtp.templateDir) {
         this.config.templateDir = mlcl.config.smtp.templateDir;
       }
@@ -180,20 +180,23 @@ class mlcl_mailer {
 
 
   protected createSender(qname: string, callback) {
-    if (!this.sender) {
+    if (!this.sender || !this.sender.canSend()) {
       this.queue.ensureQueue(qname, (err) => {
-        if(err) {
+        if (err) {
           callback(err);
         } else {
           this.queue.client.createSender(qname)
-          .then((sender) => {
-            this.sender = sender;
-            callback();
-          });
+            .then((sender) => {
+              this.sender = sender;
+              callback(null, sender);
+            })
+            .catch((error) => {
+              callback(error);
+            });
         }
       });
     } else {
-      callback();
+      callback(null, this.sender);
     }
   }
 
@@ -204,23 +207,44 @@ class mlcl_mailer {
    * @param qobject Object containing E-Mail message fields and values
    * @return void
    */
-  public sendToQueue(qobject: any,  callback?: Function): void {
+  public sendToQueue(qobject: any, callback?: Function): void {
     // mandatory fields are from, to, subject and template
     if (qobject.from && qobject.to && (qobject.subject || qobject.subjectTemplate) && qobject.template) {
-      qobject.uuid = uuid.v4();
       //  this.molecuel.log.debug('mailer', 'Sending job object to queue', qobject);
       //  publish task queues with the name given here
       let qname = 'mlcl__mailer_sendq';
       this.createSender(qname, (err) => {
-        if(!err) {
-          this.sender.send(qobject);
-          if (callback) {
-            callback(null, qobject);
+        if (!err) {
+          try {
+            this.sender.send(qobject)
+              .then((res) => {
+                // only set uuid on successful queueing
+                qobject.uuid = uuid.v4();
+                qobject.response = res;
+                if (callback) {
+                  callback(null, qobject);
+                }
+              })
+              .catch((error) => {
+                if (callback) {
+                  callback(error, qobject);
+                } else {
+                  throw new Error(error);
+                }
+              });
+          } catch (error) {
+            if (callback) {
+              callback(new Error('Failed to send to queue'), qobject);
+            } else {
+              throw new Error('Failed to send to queue');
+            }
           }
         } else {
           this.molecuel.log.error('mailer', 'sendToQueue :: error while sending to queue', err);
           if (callback) {
             callback(err, qobject);
+          } else {
+            throw new Error(err);
           }
         }
       });
@@ -285,7 +309,7 @@ class mlcl_mailer {
         let transporter = this.transporter;
         if (mailoptions.transport) {
           transporter = this.transports[mailoptions.transport];
-          delete(mailoptions.transport);
+          delete (mailoptions.transport);
         }
         // send mail with defined transport  object
         transporter.sendMail(mailoptions, (error, info) => {
@@ -378,7 +402,7 @@ class mlcl_mailer {
     if (this.i18n) {
       let i18n = this.i18n.getLocalizationInstanceForLanguage(lang);
       let translate = i18n.i18next.getFixedT(lang);
-      handlebarsinstance.registerHelper('translate', function(translatestring) {
+      handlebarsinstance.registerHelper('translate', function (translatestring) {
         let translation = translate(translatestring, data);
         return translation;
       });
