@@ -21,10 +21,13 @@ describe('mlcl_mailer', function () {
         let server = simplesmtp.createServer();
         server.listen(2500, (err) => {
             if (err) {
+                console.log('encountered error:');
+                console.log(err);
                 should.not.exist(err);
             }
             else {
                 molecuel = new _mlcl();
+                console.log('molecuel instance created');
                 molecuel.log = {};
                 molecuel.log.info = console.log;
                 molecuel.log.error = console.log;
@@ -80,12 +83,19 @@ describe('mlcl_mailer', function () {
                         secretAccessKey: process.env.AWS_SES_ACCESS_KEY
                     }
                 };
+                console.log('molecuel configs prepared');
                 new mailer(molecuel, {});
+                console.log('mailer instance created');
                 mlclQueue(molecuel);
+                console.log('queue instance created');
                 i18n(molecuel);
                 molecuel.emit('mlcl::core::init:post', molecuel);
+                console.log('mlcl core init emitted');
                 molecuel.on('mlcl::queue::init:post', (queue) => {
-                    done();
+                    console.log('mlcl queue initialized');
+                    setTimeout(() => {
+                        done();
+                    }, 250);
                 });
             }
         });
