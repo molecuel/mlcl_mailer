@@ -100,7 +100,7 @@ describe('mlcl_mailer', function() {
         new mailer(molecuel, {});
         console.log('mailer instance created');
 
-        mlclQueue(molecuel);
+        const q = mlclQueue(molecuel);
         console.log('queue instance created');
 
         i18n(molecuel);
@@ -109,6 +109,8 @@ describe('mlcl_mailer', function() {
         molecuel.emit('mlcl::core::init:post', molecuel);
         console.log('mlcl core init emitted');
 
+        console.log(q.bus.host);
+        console.log(q.bus.authenticationProvider);
         // wait until queue is being setup
         molecuel.on('mlcl::queue::init:post', (queue) => {
           console.log('mlcl queue initialized');
