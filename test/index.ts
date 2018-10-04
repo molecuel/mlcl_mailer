@@ -22,7 +22,7 @@ describe('mlcl_mailer', function() {
   let uuid2;
 
   before(function(done) {
-    this.timeout(3000);
+    this.timeout(5000);
     let server = simplesmtp.createServer();
     server.listen(2500, (err) => {
       if (err) {
@@ -133,7 +133,7 @@ describe('mlcl_mailer', function() {
       // setup e-mail data with unicode symbols
       const mailOptions = {
         from: 'dominic.boettger@inspirationlabs.com',
-        to: 'alexander.knapstein@inspirationlabs.com',
+        to: 'daniel.walther@inspirationlabs.com',
         subject: 'Test',
         template: 'email',
         data: {
@@ -164,7 +164,7 @@ describe('mlcl_mailer', function() {
       // setup e-mail data with unicode symbols
       const mailOptions = {
         from: 'dominic.boettger@inspirationlabs.com',
-        to: 'alexander.knapstein@inspirationlabs.com',
+        to: 'daniel.walther@inspirationlabs.com',
         subject: 'Test',
         template: 'email',
         data: {
@@ -183,8 +183,8 @@ describe('mlcl_mailer', function() {
       // setup Qdata with E-Mail options
       let qoptions = {
         from: 'dominic.boettger@inspirationlabs.com',
-        to: 'alexander.knapstein@inspirationlabs.com',
-        cc: 'dominic.boettger@inspirationlabs.com',
+        to: 'daniel.walther@inspirationlabs.com',
+        // cc: 'dominic.boettger@inspirationlabs.com',
         subject: 'Subject first mail',
         template: 'email',
         data: {
@@ -210,8 +210,8 @@ describe('mlcl_mailer', function() {
       // setup Qdata with E-Mail options
       let qoptions = {
         from: 'dominic.boettger@inspirationlabs.com',
-        to: 'alexander.knapstein@inspirationlabs.com',
-        cc: 'dominic.boettger@inspirationlabs.com',
+        to: 'daniel.walther@inspirationlabs.com',
+        // cc: 'dominic.boettger@inspirationlabs.com',
         subject: 'Subject second mail',
         template: 'email',
         data: {

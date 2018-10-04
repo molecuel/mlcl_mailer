@@ -17,7 +17,7 @@ describe('mlcl_mailer', function () {
     let uuid1;
     let uuid2;
     before(function (done) {
-        this.timeout(3000);
+        this.timeout(5000);
         let server = simplesmtp.createServer();
         server.listen(2500, (err) => {
             if (err) {
@@ -109,7 +109,7 @@ describe('mlcl_mailer', function () {
         it('should send a mail', function (done) {
             const mailOptions = {
                 from: 'dominic.boettger@inspirationlabs.com',
-                to: 'alexander.knapstein@inspirationlabs.com',
+                to: 'daniel.walther@inspirationlabs.com',
                 subject: 'Test',
                 template: 'email',
                 data: {
@@ -134,7 +134,7 @@ describe('mlcl_mailer', function () {
         it('should send a mail end return via callback', function (done) {
             const mailOptions = {
                 from: 'dominic.boettger@inspirationlabs.com',
-                to: 'alexander.knapstein@inspirationlabs.com',
+                to: 'daniel.walther@inspirationlabs.com',
                 subject: 'Test',
                 template: 'email',
                 data: {
@@ -150,8 +150,7 @@ describe('mlcl_mailer', function () {
         it('should send to queue', function (done) {
             let qoptions = {
                 from: 'dominic.boettger@inspirationlabs.com',
-                to: 'alexander.knapstein@inspirationlabs.com',
-                cc: 'dominic.boettger@inspirationlabs.com',
+                to: 'daniel.walther@inspirationlabs.com',
                 subject: 'Subject first mail',
                 template: 'email',
                 data: {
@@ -174,8 +173,7 @@ describe('mlcl_mailer', function () {
         it('should send second mail to queue', function (done) {
             let qoptions = {
                 from: 'dominic.boettger@inspirationlabs.com',
-                to: 'alexander.knapstein@inspirationlabs.com',
-                cc: 'dominic.boettger@inspirationlabs.com',
+                to: 'daniel.walther@inspirationlabs.com',
                 subject: 'Subject second mail',
                 template: 'email',
                 data: {
