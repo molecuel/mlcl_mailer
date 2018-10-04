@@ -215,11 +215,12 @@ class mlcl_mailer {
       let qname = 'mlcl__mailer_sendq';
       this.createSender(qname, (err) => {
         if (!err) {
+          const uuidVar = uuid.v4();
           try {
-            this.sender.send(qobject)
+            this.sender.send({...qobject, uuid: uuidVar})
               .then((res) => {
                 // only set uuid on successful queueing
-                qobject.uuid = uuid.v4();
+                qobject.uuid = uuidVar;
                 qobject.response = res;
                 if (callback) {
                   callback(null, qobject);
