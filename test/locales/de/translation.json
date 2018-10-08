@@ -1,0 +1,6 @@
+{
+  "salutation": "Sehr geehrte Damen und Herren,",
+  "salutation_male": "Sehr geehrter Herr {{ lastname }}, ",
+  "salutation_female": "Sehr geehrte Frau {{ lastname }}, ",
+  "Reservationnumber_label": "Reservierungsnummer:"
+}

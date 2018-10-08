@@ -15,3 +15,4 @@ deploy:
   api_key: $NPM_TOKEN
   on:
     repo: molecuel/mlcl_mailer
+    branch: master

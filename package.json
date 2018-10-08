@@ -1,8 +1,8 @@
 {
-  "name": "mlcl_mailer",
-  "version": "0.7.7",
+  "name": "@molecuel/mailer",
+  "version": "2.0.0-alpha1",
   "description": "Mailer plugin for molecuel",
-  "main": "src/index.js",
+  "main": "lib/index.js",
   "scripts": {
     "tslint": "./node_modules/.bin/tslint --project tsconfig.json",
     "ts": "./node_modules/.bin/tsc -p .",
@@ -31,53 +31,39 @@
     "framework"
   ],
   "author": "Dominic Böttger <Dominic.Boettger@inspirationlabs.com>",
+  "contributors": [
+    "Alexander Knapstein <Alexander.Knapstein@inspirationlabs.com>",
+    "Daniel Walther <Daniel.Walthern@inspirationlabs.com>"
+  ],
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/molecuel/mlcl_mailer/issues"
   },
-  "typings": "dist/index.d.ts",
+  "typings": "lib/index.d.ts",
   "homepage": "https://github.com/molecuel/mlcl_mailer#readme",
   "devDependencies": {
-    "@types/amqplib": "^0.5.0",
-    "@types/async": "^2.0.34",
-    "@types/aws-sdk": "0.0.42",
-    "@types/del": "^2.2.31",
-    "@types/express-handlebars": "0.0.29",
-    "@types/glob": "^5.0.30",
-    "@types/handlebars": "^4.0.31",
-    "@types/html-to-text": "^1.4.28",
-    "@types/merge2": "^0.3.29",
-    "@types/minimatch": "^2.0.29",
-    "@types/mocha": "^2.2.33",
-    "@types/q": "0.0.32",
-    "@types/uuid": "^2.0.29",
-    "@types/vinyl": "^1.2.30",
-    "@types/when": "^2.4.28",
-    "assert": ">=0.0.1",
-    "del": "^2.2.0",
-    "merge2": "^1.0.1",
+    "chai": "^4.1.2",
     "mlcl_i18n": "^0.3.3",
     "simplesmtp": "^0.3.35",
-    "mlcl_queue": "1.1.1",
     "mocha": "^2.5.3",
     "mocha-lcov-reporter": "^1.2.0",
     "nock": "^9.0.13",
     "publish": "^0.6.0",
     "remap-istanbul": "^0.9.3",
-    "should": "13.0.1",
     "supertest": "^1.2.0",
-    "tslint": "^5.3.2",
-    "typedoc": "^0.5.1",
-    "typescript": "^2.3.3"
+    "tslint": "^5.6.0",
+    "typedoc": "^0.8.0",
+    "typescript": "^2.5.2"
   },
   "dependencies": {
-    "async": "^2.0.0-rc.3",
-    "handlebars": "^4.0.5",
-    "handlebars-helpers": "^0.7.3",
+    "@molecuel/core": "^2.0.19",
+    "@molecuel/di": "^0.2.3",
+    "@molecuel/theme": "0.0.6",
     "html-to-text": "^2.1.0",
-    "nodemailer": ">=4.0.1",
-    "nodemailer-ses-transport": ">=1.5.1",
-    "uuid": "^3.0.0"
+    "i18next": "^10.3.0",
+    "i18next-node-fs-backend": "^1.0.0",
+    "nodemailer": "^4.4.2",
+    "nodemailer-ses-transport": ">=1.5.1"
   },
   "devconfig": {
     "paths": {

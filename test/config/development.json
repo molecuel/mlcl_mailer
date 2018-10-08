@@ -1,0 +1,27 @@
+{
+  "mail": {
+    "client": "csi",
+    "enabled": true,
+    "default": "ses",
+    "templateDir": "/templates",
+    "smtp": {
+      "enabled": true,
+      "debug": true,
+      "host": "2a01:4f8:210:3129::2",
+      "port": 2500,
+      "tlsUnauth": true,
+      "auth": {
+        "user": "csi",
+        "pass": "csi99654"
+      }
+    },
+    "ses": {
+      "enabled": true,
+      "debug": true,
+      "region": "eu-west-1",
+      "accessKeyId": "AKIAIDKNEKGN6M2MPR4Q",
+      "secretAccessKey": "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",
+      "returnApiKey": "Yu274nemq5VjvQqE3j3xXe4vtkP8Gs"
+    }
+  }
+}
