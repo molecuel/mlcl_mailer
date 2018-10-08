@@ -3,7 +3,7 @@
     "client": "csi",
     "enabled": true,
     "default": "ses",
-    "templateDir": "/templates",
+    "templateDir": "/test/templates",
     "smtp": {
       "enabled": true,
       "debug": true,

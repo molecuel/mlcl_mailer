@@ -42,6 +42,7 @@
   "typings": "lib/index.d.ts",
   "homepage": "https://github.com/molecuel/mlcl_mailer#readme",
   "devDependencies": {
+    "@types/mocha": "^2.2.36",
     "chai": "^4.1.2",
     "mlcl_i18n": "^0.3.3",
     "simplesmtp": "^0.3.35",

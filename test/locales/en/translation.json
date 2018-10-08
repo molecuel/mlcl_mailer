@@ -2,5 +2,7 @@
   "salutation": "Dear Sir or Madam,",
   "salutation_male": "Dear Mr. {{ lastname }}, ",
   "salutation_female": "Dear Mrs. {{ lastname }}, ",
-  "Reservationnumber_label": "Reservation number:"
+  "Reservationnumber_label": "Reservation number:",
+  "hello": "Hello",
+  "little": "little"
 }

@@ -25,7 +25,7 @@ export class MlclMailer {
         this.config = configHandler.getConfig('mail') || configHandler.getConfig('molecuel.mail');
         if (this.config && this.config.enabled) {
             // SMTP
-            if (this.config.enabled && this.config.smtp) {
+            if (this.config.smtp) {
                 // this.checkSmtpConfig(this.config.mail);
                 if (this.config.smtp.tlsUnauth) {
                     process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
@@ -54,8 +54,8 @@ export class MlclMailer {
                 this.transports.smtp = transport;
             }
             // Amazon SES
-            if (this.config.mail.enabled && this.config.mail.ses) {
-                if (this.config.mail.ses.tlsUnauth) {
+            if (this.config.enabled && this.config.ses) {
+                if (this.config.ses.tlsUnauth) {
                     process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
                 }
                 if (!this.config) {
@@ -91,7 +91,8 @@ export class MlclMailer {
             }
         });
         // await di.getInstance('MlclClore').init();
-        this.theme.registerTheme(this.config.client, { path: path.resolve(__dirname, '..', this.config.templateDir) });
+        const pathVar = path.resolve(__dirname, '../..' + this.config.templateDir);
+        await this.theme.registerTheme(this.config.client, { path: pathVar});
     }
 
     public async changeLanguage(lang: string): Promise<any> {
