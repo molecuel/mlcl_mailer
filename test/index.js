@@ -91,21 +91,6 @@ describe('mlcl_mailer', function () {
         });
     });
     describe('mailer', function () {
-        it('should initialize', function (done) {
-            this.timeout(10000);
-            let register1 = function (obj) {
-            };
-            let register2 = function (obj) {
-            };
-            let register3 = function (obj) {
-            };
-            molecuel.mailer.registerHandler(register1);
-            molecuel.mailer.registerHandler(register2);
-            molecuel.mailer.registerHandler(register3);
-            setTimeout(() => {
-                done();
-            }, 2000);
-        });
         it('should send a mail', function (done) {
             const mailOptions = {
                 from: 'dominic.boettger@inspirationlabs.com',
@@ -146,58 +131,6 @@ describe('mlcl_mailer', function () {
                 should.not.exist(err);
                 done();
             });
-        });
-        it('should send to queue', function (done) {
-            let qoptions = {
-                from: 'dominic.boettger@inspirationlabs.com',
-                to: 'daniel.walther@inspirationlabs.com',
-                subject: 'Subject first mail',
-                template: 'email',
-                data: {
-                    anrede: 'Herr',
-                    name: 'Doe',
-                    vorname: 'Jon'
-                },
-                options: {
-                    option1: 'option_value1',
-                    option2: 'option_value2'
-                }
-            };
-            molecuel.mailer.sendToQueue(qoptions, function (error, qobject) {
-                should.not.exist(error);
-                should.exist(qobject.uuid);
-                uuid1 = qobject.uuid;
-                done();
-            });
-        });
-        it('should send second mail to queue', function (done) {
-            let qoptions = {
-                from: 'dominic.boettger@inspirationlabs.com',
-                to: 'daniel.walther@inspirationlabs.com',
-                subject: 'Subject second mail',
-                template: 'email',
-                data: {
-                    anrede: 'Herr',
-                    name: 'Doe',
-                    vorname: 'Jon'
-                },
-                options: {
-                    option1: 'option_value1',
-                    option2: 'option_value2'
-                }
-            };
-            molecuel.mailer.sendToQueue(qoptions, function (error, qobject) {
-                should.not.exist(error);
-                should.exist(qobject.uuid);
-                uuid2 = qobject.uuid;
-                done();
-            });
-        });
-        it('should wait to send the message', function (done) {
-            this.timeout(4000);
-            setTimeout(() => {
-                done();
-            }, 3000);
         });
     });
 });

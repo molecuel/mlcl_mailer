@@ -18,10 +18,7 @@ class mlcl_mailer {
   protected viewEngine: Exphbs;                    // View renderer
   protected templateEngine: any;                // Mail templates
   protected molecuel: any;                      // save a copy of parent molecuel
-  protected queue: any;                         // rabbit queue
-  private stack: Array<Function>;               // custom functions to use as processor in response handling
   public i18n: any;
-  public sender: any;
   /**
    * mlcl_mailer constructor listens to queue and process jobs
    * @param mlcl any
@@ -35,91 +32,6 @@ class mlcl_mailer {
 
     this.molecuel.on('mlcl::i18n::init:post', (i18nmod) => {
       this.i18n = i18nmod;
-    });
-
-    // API custom functions to handle response queue messages
-    this.stack = [];
-
-    // Register with RabbitMQ queue jobs
-    this.molecuel.on('mlcl::queue::init:post', (queue) => {
-      this.queue = queue;
-
-      // Worker mode ( see docker run string )
-      if (this.molecuel.serverroles && this.molecuel.serverroles.worker) {
-
-        // register response queue with the name given here
-        let responseQname = 'mlcl__mailer_responseq';
-        this.queue.ensureQueue(responseQname, (err) => {
-          if (!err) {
-            this.queue.client.createReceiver(responseQname).then((receiver) => {
-              receiver.on('message', (msg) => {
-                this.molecuel.log.debug('mlcl::mailer::queue::response::message:uuid ' + msg.body.data.uuid);
-                // Asynchronously process the response queue stack
-                // Async 1.4.2 line 125 index.d.ts ( see issue https://github.com/DefinitelyTyped/DefinitelyTyped/issues/8937 )
-                let execHandler = this.execHandler(receiver, msg);
-                let res = execHandler.next();
-                do {
-                  try {
-                    res = execHandler.next();
-                  } catch (e) {
-                    this.molecuel.log.error('mlcl::mailer::queue::response::async:error: ' + e);
-                  }
-                } while (!res.done);
-              });
-            });
-          } else {
-            this.molecuel.log.error('mlcl_mailer', err);
-          }
-        });
-
-        // register send queue with the name given here
-        let qname = 'mlcl__mailer_sendq';
-        this.queue.ensureQueue(qname, (err) => {
-          if (!err) {
-            this.queue.client.createSender(responseQname).then((sender) => {
-              this.queue.client.createReceiver(qname).then((receiver) => {
-                receiver.on('message', (msg) => {
-                  let m = msg.body;
-                  this.molecuel.log.debug('mlcl::mailer::queue::send:message: ' + msg.body.uuid);
-                  let msgobject = msg.body;
-                  this.sendMail(msgobject, (sendError, info, mailoptions) => {
-                    // delete html/text to not overlarge ServiceBus Passenger
-                    delete msgobject.html;
-                    delete msgobject.text;
-                    // save the state in this object
-                    let returnmsgobject;
-                    this.molecuel.log.debug('mailer', 'Send mail debug', info);
-                    // Catch all err/success and send returnmsgobject to response queue
-                    if (sendError) {
-                      returnmsgobject = {
-                        status: 'error',
-                        data: msgobject,
-                        error: sendError
-                      };
-                      // if(sendError && sendError.retryable === false) {
-                      //  receiver.accept(msg);
-                      // } else {
-                      receiver.accept(msg);
-                      // }
-                    } else {
-                      info.sentTime = new Date();
-                      returnmsgobject = {
-                        status: 'success',
-                        data: msgobject,
-                        info: info
-                      };
-                      receiver.accept(msg);
-                    }
-                    sender.send(returnmsgobject);
-                  });
-                });
-              });
-            });
-          } else {
-            this.molecuel.log.error('mlcl_mailer', err);
-          }
-        });
-      }
     });
 
     // node-mailer migration 2.x backward compatibility if smtp is configured in legacy mode
@@ -176,82 +88,6 @@ class mlcl_mailer {
       throw new Error('A default mail transport must be defined');
     }
     this.molecuel.emit('mlcl::mailer::init:post', this);
-  }
-
-
-  protected createSender(qname: string, callback) {
-    if (!this.sender || !this.sender.canSend()) {
-      this.queue.ensureQueue(qname, (err) => {
-        if (err) {
-          callback(err);
-        } else {
-          this.queue.client.createSender(qname)
-            .then((sender) => {
-              this.sender = sender;
-              callback(null, sender);
-            })
-            .catch((error) => {
-              callback(error);
-            });
-        }
-      });
-    } else {
-      callback(null, this.sender);
-    }
-  }
-
-  /**
-   * mlcl_mailer::sendToQueue(qobject)
-   * @brief If a certain threshold of E-Mails is exeeded,
-   *        incoming jobs will be forwarded to queue.
-   * @param qobject Object containing E-Mail message fields and values
-   * @return void
-   */
-  public sendToQueue(qobject: any, callback?: Function): void {
-    // mandatory fields are from, to, subject and template
-    if (qobject.from && qobject.to && (qobject.subject || qobject.subjectTemplate) && qobject.template) {
-      //  this.molecuel.log.debug('mailer', 'Sending job object to queue', qobject);
-      //  publish task queues with the name given here
-      let qname = 'mlcl__mailer_sendq';
-      this.createSender(qname, (err) => {
-        if (!err) {
-          const uuidVar = uuid.v4();
-          try {
-            this.sender.send({...qobject, uuid: uuidVar})
-              .then((res) => {
-                // only set uuid on successful queueing
-                qobject.uuid = uuidVar;
-                qobject.response = res;
-                if (callback) {
-                  callback(null, qobject);
-                }
-              })
-              .catch((error) => {
-                if (callback) {
-                  callback(error, qobject);
-                } else {
-                  throw new Error(error);
-                }
-              });
-          } catch (error) {
-            if (callback) {
-              callback(new Error('Failed to send to queue'), qobject);
-            } else {
-              throw new Error('Failed to send to queue');
-            }
-          }
-        } else {
-          this.molecuel.log.error('mailer', 'sendToQueue :: error while sending to queue', err);
-          if (callback) {
-            callback(err, qobject);
-          } else {
-            throw new Error(err);
-          }
-        }
-      });
-    } else {
-      this.molecuel.log.warn('mailer', 'sendToQueue :: missing mandatory fields', qobject);
-    }
   }
 
   public checkSmtpConfig(config: any) {
@@ -341,22 +177,6 @@ class mlcl_mailer {
     });
   }
 
-  /**
-   * registerHandler takes custom functions to process a response queue
-   * Custom function must have a single parameter which will become a responseobject
-   *
-   * @param handlerfunc Function
-   * @return void
-   */
-  public registerHandler(handlerfunc: Function, bindContext: any): void {
-    if (bindContext) {
-      this.stack.push(handlerfunc.bind(bindContext));
-    } else {
-      this.stack.push(handlerfunc);
-    }
-  }
-
-
   public renderTemplate(templatename, data, callback) {
     this.renderHtml(templatename, data, (err, html) => {
       if (err) {
@@ -418,22 +238,6 @@ class mlcl_mailer {
     return htmlToText.fromString(htmlString);
   }
 
-  /**
-   * execHandler Generator function (Iterator) processes a queue
-   * @param channel amqplib channel
-   * @param responseobject original queue message to ack/nack
-   * @return -
-   */
-  private * execHandler(receiver, responseobject) {
-    try {
-      for (let i in this.stack) {
-        yield this.stack[i](responseobject);
-      }
-      receiver.accept(responseobject);
-    } catch (err) {
-      receiver.release(responseobject);
-    }
-  }
 }
 
 export = mlcl_mailer;
