@@ -1,6 +1,6 @@
 {
   "name": "mlcl_mailer",
-  "version": "0.7.7",
+  "version": "0.8.0",
   "description": "Mailer plugin for molecuel",
   "main": "src/index.js",
   "scripts": {
@@ -58,7 +58,6 @@
     "merge2": "^1.0.1",
     "mlcl_i18n": "^0.3.3",
     "simplesmtp": "^0.3.35",
-    "mlcl_queue": "1.1.1",
     "mocha": "^2.5.3",
     "mocha-lcov-reporter": "^1.2.0",
     "nock": "^9.0.13",
