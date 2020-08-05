@@ -91,10 +91,13 @@ describe('mlcl_mailer', function() {
 
         new mailer(molecuel, {});
         // console.log('mailer instance created');
+        molecuel.on('mlcl::i18n::init:post', () => {
+          molecuel.emit('mlcl::core::init:post', molecuel);
+          done();
+        });
         i18n(molecuel);
 
         // fake init molecuel
-        molecuel.emit('mlcl::core::init:post', molecuel);
         // console.log('mlcl core init emitted');
 
         // console.log(q.bus.host);

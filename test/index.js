@@ -74,8 +74,11 @@ describe('mlcl_mailer', function () {
                     }
                 };
                 new mailer(molecuel, {});
+                molecuel.on('mlcl::i18n::init:post', () => {
+                    molecuel.emit('mlcl::core::init:post', molecuel);
+                    done();
+                });
                 i18n(molecuel);
-                molecuel.emit('mlcl::core::init:post', molecuel);
             }
         });
     });
