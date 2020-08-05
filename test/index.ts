@@ -3,7 +3,6 @@ import * as should from 'should';
 import assert = require('assert');
 import event = require('events');
 import { timeout } from 'async';
-const mlclQueue = require('mlcl_queue');
 const i18n = require('mlcl_i18n');
 const mailer = require('../src/');
 const simplesmtp = require('simplesmtp');
@@ -44,14 +43,6 @@ describe('mlcl_mailer', function() {
         molecuel.serverroles.worker = true;
 
         molecuel.config = {};
-        molecuel.config.queue = {
-        };
-
-        if (process.env.NODE_ENV === 'dockerdev') {
-          molecuel.config.queue = {
-            uri: 'amqp://192.168.99.100'
-          };
-        }
 
         molecuel.config.i18n = {
           detectLngFromPath: true,
@@ -100,10 +91,6 @@ describe('mlcl_mailer', function() {
 
         new mailer(molecuel, {});
         // console.log('mailer instance created');
-
-        const q = mlclQueue(molecuel);
-        // console.log('queue instance created');
-
         i18n(molecuel);
 
         // fake init molecuel
@@ -112,14 +99,6 @@ describe('mlcl_mailer', function() {
 
         // console.log(q.bus.host);
         // console.log(q.bus.authenticationProvider);
-
-        // wait until queue is being setup
-        molecuel.on('mlcl::queue::init:post', (queue) => {
-          // console.log('mlcl queue initialized');
-          // setTimeout(() => {
-            done();
-          // }, 250);
-        });
       }
     });
   });

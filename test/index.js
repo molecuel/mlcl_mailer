@@ -2,7 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const should = require("should");
 const event = require("events");
-const mlclQueue = require('mlcl_queue');
 const i18n = require('mlcl_i18n');
 const mailer = require('../src/');
 const simplesmtp = require('simplesmtp');
@@ -33,12 +32,6 @@ describe('mlcl_mailer', function () {
                 molecuel.serverroles = {};
                 molecuel.serverroles.worker = true;
                 molecuel.config = {};
-                molecuel.config.queue = {};
-                if (process.env.NODE_ENV === 'dockerdev') {
-                    molecuel.config.queue = {
-                        uri: 'amqp://192.168.99.100'
-                    };
-                }
                 molecuel.config.i18n = {
                     detectLngFromPath: true,
                     languages: {
@@ -81,12 +74,8 @@ describe('mlcl_mailer', function () {
                     }
                 };
                 new mailer(molecuel, {});
-                const q = mlclQueue(molecuel);
                 i18n(molecuel);
                 molecuel.emit('mlcl::core::init:post', molecuel);
-                molecuel.on('mlcl::queue::init:post', (queue) => {
-                    done();
-                });
             }
         });
     });
