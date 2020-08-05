@@ -93,8 +93,8 @@ describe('mlcl_mailer', function () {
     describe('mailer', function () {
         it('should send a mail', function (done) {
             const mailOptions = {
-                from: 'dominic.boettger@inspirationlabs.com',
-                to: 'daniel.walther@inspirationlabs.com',
+                from: 'mlcl_mailer Test <ces@sixt-services.de>',
+                to: 'sixt@inspirationlabs.com',
                 subject: 'Test',
                 template: 'email',
                 data: {
@@ -118,8 +118,8 @@ describe('mlcl_mailer', function () {
         });
         it('should send a mail end return via callback', function (done) {
             const mailOptions = {
-                from: 'dominic.boettger@inspirationlabs.com',
-                to: 'daniel.walther@inspirationlabs.com',
+                from: 'mlcl_mailer Test <ces@sixt-services.de>',
+                to: 'sixt@inspirationlabs.com',
                 subject: 'Test',
                 template: 'email',
                 data: {
